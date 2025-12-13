@@ -355,7 +355,8 @@ const adminLogin = asyncHandler(async (req, res) => {
 
   // Compare the provided password with the stored hashed password (using argon2)
   try {
-    const isMatch = await argon2.verify(user.password, password); // Verify the hashed password with argon2
+    const isMatch = await bcrypt.compare(password, user.password);
+
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password." });

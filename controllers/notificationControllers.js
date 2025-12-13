@@ -1,13 +1,13 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("../serviceAccountKey.json");
+// const serviceAccount = require("../serviceAccountKey.json");
 const { NotificationMessages, WebNotification, User } = require("../models/userModel.js");
 const { AdminNotificationMessages } = require("../models/adminnotificationsmodel.js");
 const asyncHandler = require("express-async-handler");
 const moment = require("moment-timezone");
 const baseURL = process.env.BASE_URL;
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 const sendFCMNotification = async (registrationToken, title, body, imageUrl = null) => {
   let message;
