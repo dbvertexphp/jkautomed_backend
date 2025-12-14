@@ -7,7 +7,7 @@ const http = require("http");
 const ngrok = require("@ngrok/ngrok");
 const bodyParser = require("body-parser");
 
-// --------------------- Routes -------------------------------
+// --------------------- Routes --------------------------------
 const { userRoutes } = require("./routes/userRoutes.js");
 const { chatRoutes } = require("./routes/chatRoutes.js");
 const { messageRoutes } = require("./routes/messageRoutes.js");
@@ -63,13 +63,10 @@ app.use(express.json()); // to accept JSON data
 //   },
 // };
 
-
-
-
 // for local
 const corsOptions = {
   origin: (origin, callback) => {
-      callback(null, true);
+    callback(null, true);
   },
 };
 
