@@ -47,54 +47,96 @@ const createSubcategory = asyncHandler(async (req, res, next) => {
   });
 });
 
+// subCategoryController.js -> updateSubCategory function ko replace karo isse
 const updateSubCategory = asyncHandler(async (req, res, next) => {
   req.uploadPath = "uploads/subcategory";
+
   upload.single("subcategory_image")(req, res, async (err) => {
     if (err) {
       return next(new ErrorHandler(err.message, 400));
     }
 
-    const { category_id, subcategory_id, new_subcategory_name } = req.body;
-    const subcategory_image = req.file ? req.file.path.replace(/\\/g, "/") : null; // Normalize file path
-
-    // Check if category_id, subcategory_id, and new_subcategory_name are provided
-    if (!category_id || !subcategory_id || !new_subcategory_name) {
-      return next(new ErrorHandler("Please provide category ID, subcategory ID, and new subcategory name.", 400));
-    }
-
     try {
-      // Find the category by ID
-      const category = await Category.findById(category_id);
+      const { category_id, old_category_id, subcategory_id } = req.body;
 
-      if (!category) {
-        return next(new ErrorHandler("Category not found.", 404));
+      // frontend se jo bhi aaye (safe handling)
+      const subcategory_name = req.body.subcategory_name || req.body.new_subcategory_name;
+
+      const newImage = req.file ? req.file.path.replace(/\\/g, "/") : null;
+
+      if (!category_id || !subcategory_id || !subcategory_name) {
+        return res.status(400).json({
+          status: false,
+          message: "Missing fields",
+        });
       }
 
-      // Find the subcategory by ID within the category
-      const subcategory = category.subcategories.id(subcategory_id);
+      // 🔹 SAME CATEGORY UPDATE
+      if (!old_category_id || old_category_id === category_id) {
+        const category = await Category.findById(category_id);
 
-      if (!subcategory) {
-        return next(new ErrorHandler("Subcategory not found.", 404));
+        if (!category) {
+          return res.status(404).json({ message: "Category not found" });
+        }
+
+        const sub = category.subcategories.id(subcategory_id);
+
+        if (!sub) {
+          return res.status(404).json({ message: "Subcategory not found" });
+        }
+
+        sub.subcategory_name = subcategory_name;
+        if (newImage) sub.subcategory_image = newImage;
+
+        await category.save();
+
+        return res.json({
+          status: true,
+          message: "Subcategory updated successfully",
+        });
       }
 
-      // Update the subcategory's name and image if provided
-      subcategory.subcategory_name = new_subcategory_name;
-      if (subcategory_image) {
-        subcategory.subcategory_image = subcategory_image;
+      // 🔹 MOVE TO ANOTHER CATEGORY
+      const oldCat = await Category.findById(old_category_id);
+      const newCat = await Category.findById(category_id);
+
+      if (!oldCat || !newCat) {
+        return res.status(404).json({
+          message: "Category not found",
+        });
       }
 
-      // Save the updated category
-      await category.save();
+      const sub = oldCat.subcategories.id(subcategory_id);
 
-      // Return the updated category with subcategories
-      res.status(200).json({
-        category,
-        message: "Subcategory updated successfully.",
+      if (!sub) {
+        return res.status(404).json({
+          message: "Subcategory not found",
+        });
+      }
+
+      const movedSub = {
+        _id: sub._id,
+        subcategory_name: subcategory_name,
+        subcategory_image: newImage || sub.subcategory_image,
+        datetime: sub.datetime || new Date(),
+      };
+
+      oldCat.subcategories.pull(subcategory_id);
+      await oldCat.save();
+
+      newCat.subcategories.push(movedSub);
+      await newCat.save();
+
+      res.json({
         status: true,
+        message: "Subcategory moved and updated successfully",
       });
     } catch (error) {
-      console.error("Error updating subcategory:", error);
-      return next(new ErrorHandler("Internal Server Error", 500));
+      console.error("Update subcategory error:", error);
+      res.status(500).json({
+        status: false,
+        message: "Server error",
+      });
     }
   });
 });
@@ -111,12 +153,13 @@ const getAllSubCategories = asyncHandler(async (req, res) => {
       });
     }
 
-    // Extract all subcategories
     const subcategories = [];
     categories.forEach((category) => {
       category.subcategories.forEach((subcategory) => {
         subcategories.push({
+          category_id: category._id.toString(), // <- add this
           category_name: category.category_name,
+          subcategory_id: subcategory._id.toString(),
           subcategory_name: subcategory.subcategory_name,
           subcategory_image: subcategory.subcategory_image,
           datetime: subcategory.datetime,

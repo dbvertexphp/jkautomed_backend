@@ -1,5 +1,5 @@
 const express = require("express");
-const { Createcategory, GetAllCategories, DeleteCategory, getAllCategoriesWithSub,GetSingleCategoryByName, GetAllCategoriesAdmin, UpdateCategory, GetAllCategoriesAdminpage } = require("../controllers/categoryControllers.js");
+const { Createcategory, GetAllCategories, DeleteCategory, getAllCategoriesWithSub, GetSingleCategoryByName, GetAllCategoriesAdmin, UpdateCategory, GetAllCategoriesAdminpage } = require("../controllers/categoryControllers.js");
 const protect = require("../middleware/authMiddleware.js");
 const Authorization = require("../middleware/Authorization.middleware.js");
 
