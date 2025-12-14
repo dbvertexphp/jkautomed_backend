@@ -64,6 +64,7 @@ const {
   getAllSupplierstotal,
   getAllCancelOrders
 } = require("../controllers/userControllers.js");
+const {createProduct} = require("../controllers/productControllers.js");
 const { CreateCalendar, GetSpecialEntries, FindPriceByDateTime, GetNormalEntries } = require("../controllers/calendarControllers.js");
 const { createHire, getHireListByUserId, updateHireStatus, getAllHireList, getHireByMe, HirePaymentUpdateStatus } = require("../controllers/hireControllers.js");
 const protect = require("../middleware/authMiddleware.js");
@@ -87,6 +88,7 @@ userRoutes.route("/forgetPassword").put(forgetPassword);
 userRoutes.route("/ChangePassword").put(protect, ChangePassword);
 userRoutes.route("/logoutUser").get(protect, logoutUser);
 userRoutes.route("/getAllSupplier").get(protect, getAllSupplier);
+
 
 /*------------- User/Admin Both apis --------------------- */
 

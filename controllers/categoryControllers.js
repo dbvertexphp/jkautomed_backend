@@ -71,6 +71,8 @@ if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
 
+
+
 const Createcategory = asyncHandler(async (req, res) => {
   // Set the upload path
   req.uploadPath = uploadPath;
@@ -116,7 +118,18 @@ const Createcategory = asyncHandler(async (req, res) => {
     }
   });
 });
+const getAllCategoriesWithSub = asyncHandler(async (req, res) => {
+  try {
+    // fetch all categories and their subcategories
+    const categories = await Category.find({}).sort({ datetime: -1 });
 
+    // agar frontend ko exact same structure chahiye to wahi return kar do
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ message: "Internal Server Error", status: false });
+  }
+});
 
 
 
@@ -368,4 +381,5 @@ module.exports = {
   GetAllCategoriesAdmin,
   UpdateCategory,
   GetAllCategoriesAdminpage,
+  getAllCategoriesWithSub
 };

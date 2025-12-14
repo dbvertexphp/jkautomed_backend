@@ -1,0 +1,26 @@
+const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const { createProduct,getAllProducts,deleteProductById,toggleProductStatus } = require("../controllers/productControllers.js");
+
+// Multer setup for image upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // make sure folder exists
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
+
+// POST route
+// Max 10 images allowed, tum change kar sakte ho
+router.post("/add", upload.array("product_images", 10), createProduct);
+router.delete("/delete/:id", deleteProductById);
+router.put("/status/:id", toggleProductStatus);
+
+router.get("/all", getAllProducts);
+
+module.exports = router;

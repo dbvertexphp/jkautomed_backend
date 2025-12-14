@@ -22,6 +22,7 @@ const { timelineRoutes } = require("./routes/timelineRoutes.js");
 const { commanRoutes } = require("./routes/commanRoutes.js");
 const { transactionRoutes } = require("./routes/transactionRoutes.js");
 const { adminRoutes } = require("./routes/adminRoutes.js");
+const productRoutes = require("./routes/productRoutes.js");
 // --------------------- Routes -------------------------------
 const { notFound, errorHandler } = require("./middleware/errorMiddleware.js");
 const cors = require("cors");
@@ -77,6 +78,7 @@ app.use(cors(corsOptions));
 // --------------------------Routes------------------------------
 
 app.use("/api/user", userRoutes);
+app.use("/api/user/product", productRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/fertilizer", fertilizerRoutes);
 app.use("/api/tools", toolsRoutes);
