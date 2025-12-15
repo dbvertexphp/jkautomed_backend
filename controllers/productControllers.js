@@ -64,6 +64,125 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 });
+const getProductById = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Products.findById(id).lean();
+
+    if (!product) {
+      return res.status(404).json({
+        status: false,
+        message: "Product not found",
+      });
+    }
+
+    const baseUrl = process.env.BASE_URL; 
+    // example: https://api.example.com
+
+    // 🔥 product_images ko full URL me convert
+    product.product_images = product.product_images.map(img =>
+      img.startsWith("http") ? img : `${baseUrl}/${img}`
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Product fetched successfully",
+      product,
+    });
+
+  } catch (error) {
+    console.error("Get product by id error:", error);
+    res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
+
+const updateProduct = asyncHandler(async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const {
+      product_name,
+      category_id,
+      category_name,
+      subcategory_id,
+      subcategory_name,
+      price,
+      quantity,
+      size,
+      unit_type,
+      unit_value,
+      status,
+      remove_images // optional: images remove karne ke liye
+    } = req.body;
+
+    // 🔍 Find product
+    const product = await Products.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        status: false,
+        message: "Product not found",
+      });
+    }
+
+    // 🖼️ Existing images
+    let product_images = product.product_images || [];
+
+    // ❌ Remove selected images
+    // remove_images array se server ko delete karne ka signal mil raha hai
+if (remove_images && Array.isArray(remove_images)) {
+  product_images = product_images.filter(
+    (img) => !remove_images.includes(img)
+  );
+}
+
+// new uploaded files ko merge kar do
+if (req.files && req.files.length > 0) {
+  const newImages = req.files.map((file) => file.path.replace(/\\/g, "/"));
+  product_images = [...product_images, ...newImages];
+}
+
+
+    // 🔢 Number parsing
+    const priceNum = price !== undefined ? Number(price) : product.price;
+    const quantityNum = quantity !== undefined ? Number(quantity) : product.quantity;
+    const sizeNum = size !== undefined ? Number(size) : product.size;
+
+    // 📝 Update fields
+    product.product_name = product_name || product.product_name;
+    product.category_id = category_id || product.category_id;
+    product.category_name = category_name || product.category_name;
+    product.subcategory_id = subcategory_id || product.subcategory_id;
+    product.subcategory_name = subcategory_name || product.subcategory_name;
+    product.price = priceNum;
+    product.quantity = quantityNum;
+    product.size = sizeNum;
+    product.unit_type = unit_type || product.unit_type;
+    product.unit_value = unit_value || product.unit_value;
+    product.product_images = product_images;
+    product.status = status !== undefined ? status : product.status;
+
+    await product.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Product updated successfully",
+      product,
+    });
+
+  } catch (error) {
+    console.error("Update product error:", error);
+    res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
 const toggleProductStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,4 +268,4 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus };
+module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById };

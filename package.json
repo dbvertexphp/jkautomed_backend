@@ -35,7 +35,7 @@
     "dotenv": "^9.0.2",
     "express": "^4.18.2",
     "express-async-handler": "^1.1.4",
-    "firebase-admin": "^12.0.0",
+    "firebase-admin": "^12.7.0",
     "fluent-ffmpeg": "^2.1.2",
     "fs": "^0.0.1-security",
     "fs.promises": "^0.1.2",

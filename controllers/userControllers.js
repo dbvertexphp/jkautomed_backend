@@ -34,6 +34,7 @@ const { addNotification } = require("./orderNotificationController");
 const { sendFCMNotification } = require("./notificationControllers");
 const sendEmail = require("../utils/emailSender");
 const argon2 = require("argon2");
+const Products = require("../models/productModel.js");
 
 const getUsers = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -186,6 +187,33 @@ function sendOTP(name, mobile, otp) {
   req.write(payload);
   req.end();
 }
+
+const getAddresses = async (req, res) => {
+  try {
+    const { userId } = req.params; // User ID from request
+
+    if (!userId) {
+      return res.status(400).json({ status: false, message: "UserId is required" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    res.json({
+      status: true,
+      addresses: user.addresses || [],
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Something went wrong" });
+  }
+};
+
+
 
 const registerUser = asyncHandler(async (req, res, next) => {
   req.uploadPath = "uploads/profiles";
@@ -3142,7 +3170,7 @@ const getAllDashboardCount = asyncHandler(async (req, res) => {
     const supplierCount = await User.countDocuments({ role: "supplier" });
     const userCount = await User.countDocuments({ role: "user" });
     const bothCount = await User.countDocuments({ role: "both" });
-    const productCount = await Product.countDocuments({ product_role: "supplier", delete_status: true });
+    const productCount = await Products.countDocuments();
     const fertilizerCount = await Product.countDocuments({ product_role: "fertilizer", delete_status: true });
     const toolCount = await Product.countDocuments({ product_role: "tools", delete_status: true });
     const adminnotifications = await OrderNotification.countDocuments();
@@ -4652,4 +4680,5 @@ module.exports = {
   adminLogin,
   getAllSupplierstotal,
   getAllCancelOrders,
+  getAddresses,
 };

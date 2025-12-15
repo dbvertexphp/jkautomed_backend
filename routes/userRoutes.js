@@ -62,7 +62,8 @@ const {
   change_password,
   adminLogin,
   getAllSupplierstotal,
-  getAllCancelOrders
+  getAllCancelOrders,
+  getAddresses,
 } = require("../controllers/userControllers.js");
 const {createProduct} = require("../controllers/productControllers.js");
 const { CreateCalendar, GetSpecialEntries, FindPriceByDateTime, GetNormalEntries } = require("../controllers/calendarControllers.js");
@@ -88,6 +89,7 @@ userRoutes.route("/forgetPassword").put(forgetPassword);
 userRoutes.route("/ChangePassword").put(protect, ChangePassword);
 userRoutes.route("/logoutUser").get(protect, logoutUser);
 userRoutes.route("/getAllSupplier").get(protect, getAllSupplier);
+userRoutes.route("/getAddresses/:userId").get(protect, getAddresses);
 
 
 /*------------- User/Admin Both apis --------------------- */
