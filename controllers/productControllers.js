@@ -99,6 +99,30 @@ const getProductById = asyncHandler(async (req, res) => {
     });
   }
 });
+const getProductsByCategory = asyncHandler(async (req, res) => {
+  const { categoryId, subcategoryId } = req.params;
+
+  const products = await Products.find({
+    category_id: categoryId,
+    subcategory_id: subcategoryId,
+    status: 1
+  }).lean();
+
+  const baseUrl = process.env.BASE_URL;
+
+  products.forEach(p => {
+  p.product_images = p.product_images.map(img =>
+    `${baseUrl}/${img.replace(/^\/+/, "")}`
+  );
+});
+
+
+
+  res.status(200).json({
+    status: true,
+    products
+  });
+});
 
 
 const updateProduct = asyncHandler(async (req, res) => {
@@ -268,4 +292,4 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById };
+module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory };
