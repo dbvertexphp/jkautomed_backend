@@ -1,8 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const Cart = require("../models/cartModel.js");
+const Products = require("../models/productsModel.js");
 
-// @desc    Add product to cart
-// @route   POST /api/cart/add
+
 const addProductToCart = asyncHandler(async (req, res) => {
   const { user_id, product_id, quantity } = req.body;
 
@@ -47,5 +47,46 @@ const addProductToCart = asyncHandler(async (req, res) => {
     cart,
   });
 });
+const getCartByUser = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.params.userId;
 
-module.exports = { addProductToCart };
+    let cart = await Cart.findOne({ user_id: userId })
+      .populate({
+        path: "products.product_id",
+        model: "Products",
+      });
+
+    // 🟡 CASE 1: Cart hi nahi hai ya empty hai
+    if (!cart || !cart.products || cart.products.length === 0) {
+
+      // 🔥 Products model se saare products lao
+      const allProducts = await Products.find({ status: 1 });
+
+      return res.status(200).json({
+        status: true,
+        message: "Cart is empty, showing products list",
+        cartEmpty: true,
+        cart: [],
+        products: allProducts,
+      });
+    }
+
+    // 🟢 CASE 2: Cart me products hain
+    return res.status(200).json({
+      status: true,
+      message: "Cart fetched successfully",
+      cartEmpty: false,
+      cart: cart.products,
+    });
+
+  } catch (error) {
+    console.error("Get cart error:", error);
+    res.status(500).json({
+      status: false,
+      message: error.message || "Server error",
+    });
+  }
+});
+
+module.exports = { addProductToCart,getCartByUser};
