@@ -11,43 +11,50 @@ const createProduct = asyncHandler(async (req, res) => {
       subcategory_name,
       price,
       quantity,
-      size,
+      size,           // TEXT now
       unit_type,
       unit_value,
+      shipment_box,   // { weight, box_length, box_breadth, box_height }
+      product_description, // HTML string from React Quill
     } = req.body;
 
     // Multiple images
     let product_images = [];
     if (req.files && req.files.length > 0) {
-      product_images = req.files.map((file) => file.path.replace(/\\/g, "/"));
+      product_images = req.files.map((file) =>
+        file.path.replace(/\\/g, "/")
+      );
     }
 
-    // Numbers ko parse karlo
+    // Parse numbers
     const priceNum = price ? Number(price) : 0;
     const quantityNum = quantity ? Number(quantity) : 0;
-    const sizeNum = size ? Number(size) : 0;
+    const unitValueNum = unit_value ? Number(unit_value) : 0;
 
     // Validate required fields
-    if (!product_name || !priceNum || !quantityNum || !sizeNum) {
+    if (!product_name || !priceNum || !quantityNum ) {
       return res.status(400).json({
         status: false,
         message: "Required fields missing",
       });
     }
 
+    // Create product
     const product = await Products.create({
       product_name,
       category_id: category_id || null,
       category_name: category_name || null,
       subcategory_id: subcategory_id || null,
       subcategory_name: subcategory_name || null,
-      product_images, // ✅ array me save
+      product_images, // array of image paths
       price: priceNum,
       quantity: quantityNum,
-      size: sizeNum,
-      unit_type:  unit_type,
-      unit_value: unit_value,
-      status: 1, // Default status
+      size,           // TEXT
+      unit_type,
+      unit_value: unitValueNum,
+      shipment_box: shipment_box || {}, // optional
+      product_description: product_description || "",
+      status: 1, // default active
     });
 
     res.status(201).json({
@@ -64,6 +71,12 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+
+
+
+
 const getProductById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,7 +162,9 @@ const updateProduct = asyncHandler(async (req, res) => {
       unit_type,
       unit_value,
       status,
-      remove_images // optional: images remove karne ke liye
+      product_description,
+      shipment_box, // { weight, box_length, box_breadth, box_height }
+      remove_images // array of images to remove
     } = req.body;
 
     // 🔍 Find product
@@ -161,28 +176,24 @@ const updateProduct = asyncHandler(async (req, res) => {
       });
     }
 
-    // 🖼️ Existing images
+    // 🖼️ Handle existing images
     let product_images = product.product_images || [];
 
     // ❌ Remove selected images
-    // remove_images array se server ko delete karne ka signal mil raha hai
-if (remove_images && Array.isArray(remove_images)) {
-  product_images = product_images.filter(
-    (img) => !remove_images.includes(img)
-  );
-}
+    if (remove_images && Array.isArray(remove_images)) {
+      product_images = product_images.filter((img) => !remove_images.includes(img));
+    }
 
-// new uploaded files ko merge kar do
-if (req.files && req.files.length > 0) {
-  const newImages = req.files.map((file) => file.path.replace(/\\/g, "/"));
-  product_images = [...product_images, ...newImages];
-}
-
+    // ✅ Merge newly uploaded images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map((file) => file.path.replace(/\\/g, "/"));
+      product_images = [...product_images, ...newImages];
+    }
 
     // 🔢 Number parsing
     const priceNum = price !== undefined ? Number(price) : product.price;
     const quantityNum = quantity !== undefined ? Number(quantity) : product.quantity;
-    const sizeNum = size !== undefined ? Number(size) : product.size;
+   
 
     // 📝 Update fields
     product.product_name = product_name || product.product_name;
@@ -192,11 +203,22 @@ if (req.files && req.files.length > 0) {
     product.subcategory_name = subcategory_name || product.subcategory_name;
     product.price = priceNum;
     product.quantity = quantityNum;
-    product.size = sizeNum;
+    product.size = size || product.size;
     product.unit_type = unit_type || product.unit_type;
     product.unit_value = unit_value || product.unit_value;
     product.product_images = product_images;
     product.status = status !== undefined ? status : product.status;
+    product.product_description = product_description || product.product_description;
+
+    // ✅ Shipment box update
+    if (shipment_box) {
+      product.shipment_box = {
+        weight: shipment_box.weight || product.shipment_box?.weight || "",
+        box_length: shipment_box.box_length || product.shipment_box?.box_length || "",
+        box_breadth: shipment_box.box_breadth || product.shipment_box?.box_breadth || "",
+        box_height: shipment_box.box_height || product.shipment_box?.box_height || "",
+      };
+    }
 
     await product.save();
 
@@ -214,6 +236,7 @@ if (req.files && req.files.length > 0) {
     });
   }
 });
+
 
 const toggleProductStatus = async (req, res) => {
   try {

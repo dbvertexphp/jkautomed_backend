@@ -183,33 +183,48 @@ const UpdateCategory = asyncHandler(async (req, res) => {
 
 const GetAllCategories = asyncHandler(async (req, res) => {
   try {
-    // Fetch all categories from the database
+    const BASE_URL = `${req.protocol}://${req.get("host")}/`;
+
     const categories = await Category.find().sort({ category_name: 1 });
 
     if (!categories || categories.length === 0) {
       throw new ErrorHandler("No categories found.", 400);
     }
 
-    // Sort the categories alphabetically
     const sortedCategories = categories.sort((a, b) => {
-      // "All" category should be at the top
       if (a.category_name.toLowerCase() === "all") return -1;
       if (b.category_name.toLowerCase() === "all") return 1;
-
-      // "Other" category should be at the bottom
       if (a.category_name.toLowerCase() === "other") return 1;
       if (b.category_name.toLowerCase() === "other") return -1;
-
-      // Sort alphabetically for other categories
       return a.category_name.localeCompare(b.category_name);
     });
 
-    res.status(200).json(sortedCategories);
+    const response = sortedCategories.map((cat) => {
+      const catObj = cat.toObject(); // ✅ VERY IMPORTANT
+
+      return {
+        ...catObj,
+        category_image: catObj.category_image
+          ? BASE_URL + catObj.category_image
+          : null,
+        subcategories: catObj.subcategories.map((sub) => {
+          return {
+            ...sub, // already plain object
+            subcategory_image: sub.subcategory_image
+              ? BASE_URL + sub.subcategory_image
+              : null,
+          };
+        }),
+      };
+    });
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching categories:", error);
     throw new ErrorHandler("Internal Server Error.", 500);
   }
 });
+
 
 const DeleteCategory = asyncHandler(async (req, res) => {
   const { categoryId } = req.body;

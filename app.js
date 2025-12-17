@@ -12,6 +12,7 @@ const { userRoutes } = require("./routes/userRoutes.js");
 const { chatRoutes } = require("./routes/chatRoutes.js");
 const { messageRoutes } = require("./routes/messageRoutes.js");
 const { categoryRoutes } = require("./routes/categoryRoutes.js");
+const { cartRoutes } = require("./routes/cartRoutes.js");
 const { videoRoutes } = require("./routes/videoRoutes.js");
 const { reelRoutes } = require("./routes/reelRoutes.js");
 const { companyDetails } = require("./routes/companydetailsRoutes.js");
@@ -84,6 +85,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/subCategory", subCategoryRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/video", videoRoutes);
 app.use("/api/reel", reelRoutes);
 app.use("/api/CompanyDetails", companyDetails);
@@ -104,9 +106,12 @@ if (process.env.NODE_ENV == "production") {
   app.get("*", (req, res) => res.sendFile(path.resolve(__dirname1, "view", "index.html")));
 } else {
   app.get("/", (req, res) => {
-    res.send("API is running..");
+    res.send("API is running now..");
   });
 }
+app.get('/testnow', (req, res) => {
+  res.send('Test route is working!');
+});
 
 // --------------------------deployment------------------------------
 
@@ -129,7 +134,7 @@ const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL;
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on PORT ${PORT}...`);
+  console.log(`Server running on PORT now ${PORT}...`);
   console.log(`Base URL: ${BASE_URL}`);
 });
 const io = createSocketIO(server);
