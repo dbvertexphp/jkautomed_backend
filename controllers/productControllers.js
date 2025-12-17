@@ -100,29 +100,37 @@ const getProductById = asyncHandler(async (req, res) => {
   }
 });
 const getProductsByCategory = asyncHandler(async (req, res) => {
-  const { categoryId, subcategoryId } = req.params;
+  const { categoryId, subcategoryIds } = req.body;
+
+  // validation
+  if (!categoryId || !Array.isArray(subcategoryIds) || !subcategoryIds.length) {
+    return res.status(400).json({
+      status: false,
+      message: "categoryId and subcategoryIds array are required"
+    });
+  }
 
   const products = await Products.find({
     category_id: categoryId,
-    subcategory_id: subcategoryId,
+    subcategory_id: { $in: subcategoryIds },
     status: 1
   }).lean();
 
   const baseUrl = process.env.BASE_URL;
 
   products.forEach(p => {
-  p.product_images = p.product_images.map(img =>
-    `${baseUrl}/${img.replace(/^\/+/, "")}`
-  );
-});
-
-
+    p.product_images = p.product_images.map(img =>
+      `${baseUrl}/${img.replace(/^\/+/, "")}`
+    );
+  });
 
   res.status(200).json({
     status: true,
+    total: products.length,
     products
   });
 });
+
 
 
 const updateProduct = asyncHandler(async (req, res) => {
