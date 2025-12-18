@@ -256,31 +256,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     });
 
     if (user) {
-      const sendEmailAsync = async () => {
-        const subject = "Welcome to Our Service!";
-        const text = `Hello ${full_name},\n\nThank you for registering. Your OTP for verification is: ${otp}`;
-
-        try {
-          await sendEmail(email, subject, text); // Send email after user registration
-        } catch (error) {
-          console.error("Failed to send email notification:", error);
-        }
-      };
-
-      // Schedule the email to be sent
-      setImmediate(sendEmailAsync);
-      // sendOTP(full_name, mobile, otp);
-      try {
-        const adminDashboard = await AdminDashboard.findOne();
-        if (adminDashboard) {
-          adminDashboard.user_count++;
-          await adminDashboard.save();
-        } else {
-          console.error("AdminDashboard not found");
-        }
-      } catch (error) {
-        console.error("Failed to update admin dashboard:", error);
-      }
+    
 
       res.status(201).json({
         _id: user._id,

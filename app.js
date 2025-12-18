@@ -10,6 +10,8 @@ const bodyParser = require("body-parser");
 // --------------------- Routes --------------------------------
 const { userRoutes } = require("./routes/userRoutes.js");
 const { chatRoutes } = require("./routes/chatRoutes.js");
+// const {shiprocketRoutes} = require("./routes/shiprocketRoutes.js");
+
 const { messageRoutes } = require("./routes/messageRoutes.js");
 const { categoryRoutes } = require("./routes/categoryRoutes.js");
 const { cartRoutes } = require("./routes/cartRoutes.js");
@@ -88,6 +90,7 @@ app.use("/api/subCategory", subCategoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/video", videoRoutes);
 app.use("/api/reel", reelRoutes);
+// app.use("/api/shiprocket", shiprocketRoutes);
 app.use("/api/CompanyDetails", companyDetails);
 app.use("/api/job", jobRoutes);
 app.use("/api/timeline", timelineRoutes);
