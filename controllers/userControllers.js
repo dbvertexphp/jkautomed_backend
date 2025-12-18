@@ -292,17 +292,17 @@ const authUser = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Invalid Password", 400);
   }
 
-  if (userdata.otp_verified === 0) {
-    const otp = generateOTP();
-    // sendOTP(userdata.full_name, mobile, otp);
-    await User.updateOne({ _id: userdata._id }, { $set: { otp } });
-    // throw new ErrorHandler("OTP Not verified", 400);
-    res.status(400).json({
-      otp,
-      message: "OTP Not verified",
-      status: false,
-    });
-  }
+  // if (userdata.otp_verified === 0) {
+  //   const otp = generateOTP();
+  //   // sendOTP(userdata.full_name, mobile, otp);
+  //   await User.updateOne({ _id: userdata._id }, { $set: { otp } });
+  //   // throw new ErrorHandler("OTP Not verified", 400);
+  //   res.status(400).json({
+  //     otp,
+  //     message: "OTP Not verified",
+  //     status: false,
+  //   });
+  // }
 
   // Save firebase_token if provided
   if (firebase_token) {
