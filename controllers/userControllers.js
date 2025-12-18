@@ -1235,7 +1235,7 @@ const getCartProducts = asyncHandler(async (req, res) => {
       user_id: userID,
     }).populate({
       path: "product_id",
-      match: { delete_status: true, quantity: { $gt: 0 } }, // Quantity should be greater than 0 } // Only populate products where delete_status is true
+      match: {  quantity: { $gt: 0 } }, // Quantity should be greater than 0 } // Only populate products where delete_status is true
     });
 
     // Filter out cart items where the product_id is null (i.e., product didn't match delete_status)
