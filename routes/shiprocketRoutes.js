@@ -1,8 +1,8 @@
-import express from "express";
-import { checkServiceability } from "../controllers/shiprocketControllers.js";
+const express = require("express");
+const { checkServiceability } = require("../controllers/shiprocketControllers.js");
 
-const router = express.Router();
+const shiprocketRoutes = express.Router();
 
-router.post("/serviceability", checkServiceability);
+shiprocketRoutes.get("/serviceability", checkServiceability);
 
-export default router;
+module.exports = { shiprocketRoutes };

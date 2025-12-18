@@ -22,7 +22,7 @@ const ErrorHandler = require("../utils/errorHandler.js");
 const http = require("https");
 const jwt = require("jsonwebtoken");
 const upload = require("../middleware/uploadMiddleware.js");
-const Product = require("../models/productModel.js");
+const Product = require("../models/productsModel.js");
 const Cart = require("../models/cartModel.js");
 const Order = require("../models/orderModel.js");
 const TeacherPayment = require("../models/TeacherPaymentModel.js");
@@ -1041,37 +1041,33 @@ const addToCart = asyncHandler(async (req, res) => {
     //       path: "supplier_id",
     //       model: "User",
     //     });
-    const product = await Product.findOne({
-      _id: product_id,
-      delete_status: true,
-    }).populate({
-      path: "supplier_id",
-      model: "User",
-    });
-    if (!product) {
-      return res.status(404).json({ message: "Product not found", status: false });
-    }
+   const product = await Product.findOne({ _id: product_id });
 
-    // Prevent the supplier from adding their own product to the cart
-    if (product.supplier_id._id.toString() === user._id.toString()) {
-      return res.status(400).json({ message: "You cannot add your own product to the cart", status: false });
-    }
+if (!product) {
+  return res.status(404).json({ message: "Product not found", status: false });
+}
 
-    // Ensure there is a supplier and pin codes to check
-    if (!product.supplier_id || !product.supplier_id.pin_code || !user.pin_code) {
-      return res.status(400).json({ message: "Supplier or User pin codes are missing", status: false });
-    }
 
-    // Check if any user pin code matches any supplier pin code
-    const isPinCodeMatch = user.pin_code.some((pin) => product.supplier_id.pin_code.includes(pin));
-    if (!isPinCodeMatch) {
-      return res.status(400).json({ message: "User's location is not eligible for this supplier's product", status: false });
-    }
+    // // Prevent the supplier from adding their own product to the cart
+    // if (product.supplier_id._id.toString() === user._id.toString()) {
+    //   return res.status(400).json({ message: "You cannot add your own product to the cart", status: false });
+    // }
 
-    // Check if the requested quantity exceeds available stock
-    if (quantity > product.quantity) {
-      return res.status(400).json({ message: "Requested quantity exceeds available stock", status: false });
-    }
+    // // Ensure there is a supplier and pin codes to check
+    // if (!product.supplier_id || !product.supplier_id.pin_code || !user.pin_code) {
+    //   return res.status(400).json({ message: "Supplier or User pin codes are missing", status: false });
+    // }
+
+    // // Check if any user pin code matches any supplier pin code
+    // const isPinCodeMatch = user.pin_code.some((pin) => product.supplier_id.pin_code.includes(pin));
+    // if (!isPinCodeMatch) {
+    //   return res.status(400).json({ message: "User's location is not eligible for this supplier's product", status: false });
+    // }
+
+    // // Check if the requested quantity exceeds available stock
+    // if (quantity > product.quantity) {
+    //   return res.status(400).json({ message: "Requested quantity exceeds available stock", status: false });
+    // }
 
     // Check if the product is already in the cart
     let cartItem = await Cart.findOne({ user_id: userID, product_id: product_id });
@@ -1084,7 +1080,7 @@ const addToCart = asyncHandler(async (req, res) => {
         user_id: userID,
         product_id: product_id,
         quantity: quantity,
-        supplier_id: product.supplier_id,
+        
       });
     }
 
@@ -1095,6 +1091,7 @@ const addToCart = asyncHandler(async (req, res) => {
     res.status(201).json({
       status: true,
       message: "Product added to cart successfully",
+      product:product,
       cartItem,
     });
   } catch (error) {

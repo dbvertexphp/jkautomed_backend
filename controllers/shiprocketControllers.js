@@ -3,7 +3,7 @@ import { shiprocketRequest } from "../shiprocket.api.js";
 export const checkServiceability = async (req, res) => {
   try {
     const response = await shiprocketRequest(
-      "post",
+      "GET",
       "https://apiv2.shiprocket.in/v1/external/courier/serviceability",
       req.body
     );

@@ -99,11 +99,11 @@ userRoutes.route("/getProductByCategory_id").post(protect, Authorization(["user"
 userRoutes.route("/searchProducts").post(protect, Authorization(["user","both"]), searchProducts);
 userRoutes.route("/addFavoriteProduct").post(protect, Authorization(["user","both"]), addFavoriteProduct);
 userRoutes.route("/removeFavoriteProduct").post(protect, Authorization(["user","both"]), removeFavoriteProduct);
-userRoutes.route("/addToCart").post(protect, Authorization(["user","both"]), addToCart);
+userRoutes.route("/addToCart").post(protect, Authorization(["user"]), addToCart);
 userRoutes.route("/getFavoriteProduct").get(protect, Authorization(["user","both"]), getFavoriteProduct);
 userRoutes.route("/getProductDetailByProductId").post(protect, Authorization(["user","both"]), getProductDetailByProductId);
 userRoutes.route("/getCartProducts").get(protect, Authorization(["user","both"]), getCartProducts);
-userRoutes.route("/increaseCartQuantity").post(protect, Authorization(["user","both"]), increaseCartQuantity);
+userRoutes.route("/increaseCartQuantity").post(protect, Authorization(["user"]), increaseCartQuantity);
 userRoutes.route("/decreaseCartQuantity").post(protect, Authorization(["user","both"]), decreaseCartQuantity);
 userRoutes.route("/checkout").post(protect, Authorization(["user","both"]), checkout);
 userRoutes.route("/removeFromCart").post(protect, Authorization(["user","both"]), removeFromCart);
