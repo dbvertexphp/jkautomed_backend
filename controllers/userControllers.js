@@ -3,6 +3,8 @@ const asyncHandler = require("express-async-handler");
 const cookie = require("cookie");
 const bcrypt = require("bcryptjs");
 const moment = require("moment");
+const axios =require( "axios");
+
 const { generateToken, blacklistToken } = require("../config/generateToken.js");
 const { User, NotificationMessages, AdminDashboard, WebNotification } = require("../models/userModel.js");
 const Category = require("../models/categoryModel.js");
@@ -22,6 +24,7 @@ const ErrorHandler = require("../utils/errorHandler.js");
 const http = require("https");
 const jwt = require("jsonwebtoken");
 const upload = require("../middleware/uploadMiddleware.js");
+const ShiprocketAuth = require("../models/shiprocketmodel.js");
 const Product = require("../models/productsModel.js");
 const Cart = require("../models/cartModel.js");
 const Order = require("../models/orderModel.js");
@@ -1219,6 +1222,7 @@ const addOrUpdateAddress = asyncHandler(async (req, res) => {
   const {
     state,
     city,
+    pincode,
     building_name,
     address_line,
     address_description,
@@ -1257,64 +1261,139 @@ const getCartProducts = asyncHandler(async (req, res) => {
   const userID = req.headers.userID;
 
   try {
-    // Validate that userID exists in the headers
     if (!userID) {
-      console.log("No userID found in the headers.");
       return res.status(400).json({ message: "User ID is required", status: false });
     }
 
-    // Check if the userID is a valid ObjectId format
     if (!mongoose.Types.ObjectId.isValid(userID)) {
-      console.log(`Invalid userID format: ${userID}`);
       return res.status(400).json({ message: "Invalid User ID format", status: false });
     }
 
-    // Find cart items for the given userID with additional conditions
-    console.log(`Finding cart items for userID: ${userID}`);
+    // 🔹 1. USER FETCH (pin_code ke liye)
+    const user = await User.findById(userID).select("pin_code");
+    const userfull = await User.findById(userID);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        status: false,
+      });
+    }
+
+    // 🔹 2. First pincode
+    const userfulls=userfull;
+    const userPincode = user?.pin_code?.[0] || null;
+
+    // 🔹 3. CART FETCH
     const cartItems = await Cart.find({
       user_id: userID,
     }).populate({
       path: "product_id",
-      match: {  quantity: { $gt: 0 } }, // Quantity should be greater than 0 } // Only populate products where delete_status is true
+      match: { quantity: { $gt: 0 } },
     });
 
-    // Filter out cart items where the product_id is null (i.e., product didn't match delete_status)
-    console.log(cartItems);
-    const filteredCartItems = cartItems.filter((item) => item.product_id);
+    const filteredCartItems = cartItems.filter(item => item.product_id);
 
-    // Log the filtered cart items
-    console.log("Filtered Cart Items:", filteredCartItems);
-
-    if (!filteredCartItems || filteredCartItems.length === 0) {
-      console.log("No valid cart items found for this user.");
-      return res.status(404).json({ message: "No valid items found in cart", status: false });
+    if (filteredCartItems.length === 0) {
+      return res.status(404).json({
+        message: "No valid items found in cart",
+        status: false
+      });
     }
 
-    // Calculate total amount
     let totalAmount = 0;
-    filteredCartItems.forEach((item) => {
-      if (item.product_id && item.product_id.price) {
-        console.log(`Calculating for item: ${item.product_id.name}`);
-        totalAmount += item.product_id.price * item.quantity;
-      } else {
-        console.log(`Skipping item due to missing price or product_id: ${item._id}`);
-      }
-    });
+    let totalWeight = 0;
 
-    // Return success response
-    console.log(`Total amount calculated: ${totalAmount}`);
+    filteredCartItems.forEach(item => {
+      const product = item.product_id;
+
+      // 💰 total price
+      totalAmount += product.price * item.quantity;
+
+      // ⚖️ total weight (shipment_box.weight × cart quantity)
+      const productWeight = product?.shipment_box?.weight || 0;
+      totalWeight += productWeight * item.quantity;
+    });
+        const shiprocketData = await ShiprocketAuth.findById("6943cb1e4360ab72e844e929").select("token");
+    if (!shiprocketData || !shiprocketData.token) {
+      return res.status(400).json({ message: "Shiprocket token not found", status: false });
+    }
+    const shiprocketToken = shiprocketData.token;
+
+    // 5️⃣ PICKUP LOCATION API CALL
+    const pickupRes = await axios.get(
+      "https://apiv2.shiprocket.in/v1/external/settings/company/pickup",
+      {
+        headers: {
+          Authorization: `Bearer ${shiprocketToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const pickup_location =
+      pickupRes?.data?.data?.shipping_address?.[0]?.pickup_location || null;
+      const pickup_pincode = pickupRes?.data?.data?.shipping_address?.[0]?.pin_code || null;
+const courierRes = await axios.get(
+  "https://apiv2.shiprocket.in/v1/external/courier/serviceability",
+  {
+    params: {
+      pickup_postcode: pickup_pincode,
+      delivery_postcode: userPincode,
+      weight: totalWeight,
+      cod: 0
+    },
+    headers: {
+      Authorization: `Bearer ${shiprocketToken}`,
+      "Content-Type": "application/json",
+    },
+  }
+);
+
+const courierList = courierRes.data.data.available_courier_companies;
+
+// Filter prepaid couriers only
+const prepaidCouriers = courierList
+  .filter(courier => courier.cod === 0)
+  .map(courier => ({
+    courier_name: courier.courier_name,
+    courier_company_id: courier.courier_company_id,
+    rate: courier.rate,
+    estimated_delivery_days: courier.estimated_delivery_days,
+    etd: courier.etd,
+    delivery_boy_contact: courier.delivery_boy_contact,
+  }));
+
+// Agar prepaid courier available nahi hai
+const cheapestCourier = prepaidCouriers.length > 0 
+  ? prepaidCouriers.reduce((prev, curr) => prev.rate < curr.rate ? prev : curr)
+  : "Not Available";
+    // 🔹 4. FINAL RESPONSE
     res.status(200).json({
       status: true,
       message: "Cart items retrieved successfully",
+      // 👈 HERE
       cartItems: filteredCartItems,
+      location: pickup_location,
+      pincode: pickup_pincode,
+       user_pincode: userPincode,
+       userfulls:userfulls.address,
+      courierData: cheapestCourier,
       totalAmount,
+      totalWeight
     });
+
   } catch (error) {
-    // Enhanced error logging
     console.error("Error in getCartProducts:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res.status(500).json({
+      error: "Internal Server Error",
+      details: error.message
+    });
   }
 });
+
+
+
 
 const increaseCartQuantity = asyncHandler(async (req, res) => {
   const { product_id, quantity } = req.body;
