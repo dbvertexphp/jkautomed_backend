@@ -2,8 +2,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const moment = require("moment-timezone");
 
+
 const userSchema = mongoose.Schema(
-  {
+
+ {
     full_name: { type: String },
     email: {
       type: String,
@@ -18,7 +20,15 @@ const userSchema = mongoose.Schema(
     profile_pic: {
       type: String,
     },
-    address: { type: String },
+    // 📍 OPTIONAL ADDRESS OBJECT
+   address: {
+  state: { type: String, default: null },
+  city: { type: String, default: null },
+  building_name: { type: String, default: null },
+  address_line: { type: String, default: null },
+  address_description: { type: String, default: null },
+},
+
     datetime: {
       type: String,
       default: () => moment().tz("Asia/Kolkata").format("YYYY-MMM-DD hh:mm:ss A"),
@@ -29,6 +39,9 @@ const userSchema = mongoose.Schema(
     },
   },
   { timestamps: true }
+   
+
+   
 );
 
 const adminDashboardSchema = new mongoose.Schema({

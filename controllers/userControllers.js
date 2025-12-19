@@ -204,7 +204,7 @@ const getAddresses = async (req, res) => {
 
     res.json({
       status: true,
-      addresses: user.addresses || [],
+      addresses: user.address || [],
     });
 
   } catch (err) {
@@ -1212,6 +1212,46 @@ const getProductDetailByProductId = asyncHandler(async (req, res) => {
 // });
 
 // edit by Atest
+
+const addOrUpdateAddress = asyncHandler(async (req, res) => {
+  const userId = req.userId || req.params.userId;
+
+  const {
+    state,
+    city,
+    building_name,
+    address_line,
+    address_description,
+  } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        "address.state": state,
+        "address.city": city,
+        "address.building_name": building_name,
+        "address.address_line": address_line,
+        "address.address_description": address_description,
+      },
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+
+  res.status(200).json({
+    status: true,
+    message: "Address updated successfully",
+    address: user.address,
+  });
+});
+
 
 const getCartProducts = asyncHandler(async (req, res) => {
   const userID = req.headers.userID;
@@ -4654,4 +4694,5 @@ module.exports = {
   getAllSupplierstotal,
   getAllCancelOrders,
   getAddresses,
+  addOrUpdateAddress,
 };

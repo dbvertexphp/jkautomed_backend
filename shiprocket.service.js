@@ -28,6 +28,7 @@ const loginAndSaveShiprocket = async () => {
     { upsert: true, new: true }
   );
 
+  console.log("🔥 New Shiprocket Token Generated:", data.token); // ✅ console me dikhayega
   return data.token;
 };
 
@@ -40,8 +41,12 @@ export const getShiprocketToken = async (force = false) => {
     record &&
     Date.now() - new Date(record.generatedAt).getTime() < TOKEN_TTL
   ) {
+    console.log("⚡ Using existing Shiprocket Token:", record.token); // ✅ console me dikhayega
     return record.token;
   }
 
   return await loginAndSaveShiprocket();
 };
+
+// 🔹 Test run
+
