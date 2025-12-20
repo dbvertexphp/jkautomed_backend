@@ -46,7 +46,7 @@ const createOrder = asyncHandler(async (req, res) => {
     shipping_address,
     payment_method,
     total_amount,
-    status: "order",
+    status: "pending",
   });
 
   res.status(201).json({

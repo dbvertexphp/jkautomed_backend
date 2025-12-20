@@ -11,9 +11,9 @@ const createProduct = asyncHandler(async (req, res) => {
       subcategory_name,
       price,
       quantity,
-      size,           // TEXT now
-      unit_type,
-      unit_value,
+      // size,           // TEXT now
+      // unit_type,
+      // unit_value,
       shipment_box,   // { weight, box_length, box_breadth, box_height }
       product_description, // HTML string from React Quill
     } = req.body;
@@ -29,10 +29,10 @@ const createProduct = asyncHandler(async (req, res) => {
     // Parse numbers
     const priceNum = price ? Number(price) : 0;
     const quantityNum = quantity ? Number(quantity) : 0;
-    const unitValueNum = unit_value ? Number(unit_value) : 0;
+    // const unitValueNum = unit_value ? Number(unit_value) : 0;
 
     // Validate required fields
-    if (!product_name || !priceNum || !quantityNum ) {
+    if (!product_name || !quantityNum ) {
       return res.status(400).json({
         status: false,
         message: "Required fields missing",
@@ -49,9 +49,9 @@ const createProduct = asyncHandler(async (req, res) => {
       product_images, // array of image paths
       price: priceNum,
       quantity: quantityNum,
-      size,           // TEXT
-      unit_type,
-      unit_value: unitValueNum,
+      // size,           // TEXT
+      // unit_type,
+      // unit_value: unitValueNum,
       shipment_box: shipment_box || {}, // optional
       product_description: product_description || "",
       status: 1, // default active

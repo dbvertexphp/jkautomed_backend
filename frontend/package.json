@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "tobuu_node": "file:.."
+  }
+}
