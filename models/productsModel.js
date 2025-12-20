@@ -11,26 +11,26 @@ const ProductSchema = new Schema(
     product_images: { type: [String], default: [] },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
-    size: { type: String, required: true },
-    unit_type: { type: String, required: true }, // piece, set, liter
-unit_value: { type: Number, required: true }, // 1, 2, 500
+    // size: { type: String, required: true },
+//     unit_type: { type: String, required: true }, // piece, set, liter
+// unit_value: { type: Number, required: true }, // 1, 2, 500
 shipment_box: {
       weight: {
         type: Number, // kg
         default: null,
       },
-      box_length: {
-        type: Number, // cm
-        default: null,
-      },
-      box_breadth: {
-        type: Number, // cm
-        default: null,
-      },
-      box_height: {
-        type: Number, // cm
-        default: null,
-      },
+      // box_length: {
+      //   type: Number, // cm
+      //   default: null,
+      // },
+      // box_breadth: {
+      //   type: Number, // cm
+      //   default: null,
+      // },
+      // box_height: {
+      //   type: Number, // cm
+      //   default: null,
+      // },
     },
  product_description: {
       type: String,

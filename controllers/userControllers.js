@@ -1281,7 +1281,7 @@ const getCartProducts = asyncHandler(async (req, res) => {
     }
 
     // 🔹 2. First pincode
-    const userfulls=userfull;
+    const userfulls = userfull;
     const userPincode = user?.pin_code?.[0] || null;
 
     // 🔹 3. CART FETCH
@@ -1307,17 +1307,20 @@ const getCartProducts = asyncHandler(async (req, res) => {
     filteredCartItems.forEach(item => {
       const product = item.product_id;
 
-      // 💰 total price
       totalAmount += product.price * item.quantity;
 
-      // ⚖️ total weight (shipment_box.weight × cart quantity)
       const productWeight = product?.shipment_box?.weight || 0;
       totalWeight += productWeight * item.quantity;
     });
-        const shiprocketData = await ShiprocketAuth.findById("6943cb1e4360ab72e844e929").select("token");
+
+    const shiprocketData = await ShiprocketAuth
+      .findById("6943cb1e4360ab72e844e929")
+      .select("token");
+
     if (!shiprocketData || !shiprocketData.token) {
       return res.status(400).json({ message: "Shiprocket token not found", status: false });
     }
+
     const shiprocketToken = shiprocketData.token;
 
     // 5️⃣ PICKUP LOCATION API CALL
@@ -1333,64 +1336,72 @@ const getCartProducts = asyncHandler(async (req, res) => {
 
     const pickup_location =
       pickupRes?.data?.data?.shipping_address?.[0]?.pickup_location || null;
-      const pickup_pincode = pickupRes?.data?.data?.shipping_address?.[0]?.pin_code || null;
-const courierRes = await axios.get(
-  "https://apiv2.shiprocket.in/v1/external/courier/serviceability",
-  {
-    params: {
-      pickup_postcode: pickup_pincode,
-      delivery_postcode: userPincode,
-      weight: totalWeight,
-      cod: 0
-    },
-    headers: {
-      Authorization: `Bearer ${shiprocketToken}`,
-      "Content-Type": "application/json",
-    },
-  }
-);
 
-const courierList = courierRes.data.data.available_courier_companies;
+    const pickup_pincode =
+      pickupRes?.data?.data?.shipping_address?.[0]?.pin_code || null;
 
-// Filter prepaid couriers only
-const prepaidCouriers = courierList
-  .filter(courier => courier.cod === 0)
-  .map(courier => ({
-    courier_name: courier.courier_name,
-    courier_company_id: courier.courier_company_id,
-    rate: courier.rate,
-    estimated_delivery_days: courier.estimated_delivery_days,
-    etd: courier.etd,
-    delivery_boy_contact: courier.delivery_boy_contact,
-  }));
+    const courierRes = await axios.get(
+      "https://apiv2.shiprocket.in/v1/external/courier/serviceability",
+      {
+        params: {
+          pickup_postcode: pickup_pincode,
+          delivery_postcode: userPincode,
+          weight: totalWeight,
+          cod: 0
+        },
+        headers: {
+          Authorization: `Bearer ${shiprocketToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-// Agar prepaid courier available nahi hai
-const cheapestCourier = prepaidCouriers.length > 0 
-  ? prepaidCouriers.reduce((prev, curr) => prev.rate < curr.rate ? prev : curr)
-  : "Not Available";
+    // ✅ SAFE CHECK (ERROR FIX)
+    const courierList =
+      courierRes?.data?.data?.available_courier_companies || [];
+
+    const prepaidCouriers = courierList
+      .filter(courier => courier.cod === 0 && courier.rate)
+      .map(courier => ({
+        courier_name: courier.courier_name,
+        courier_company_id: courier.courier_company_id,
+        rate: Number(courier.rate),
+        estimated_delivery_days: courier.estimated_delivery_days,
+        etd: courier.etd,
+        cod: courier.cod,
+        delivery_boy_contact: courier.delivery_boy_contact,
+      }));
+
+    const cheapestCourier =
+      prepaidCouriers.length > 0
+        ? prepaidCouriers.reduce((prev, curr) =>
+            curr.rate < prev.rate ? curr : prev
+          )
+        : "Not Available";
+
     // 🔹 4. FINAL RESPONSE
     res.status(200).json({
       status: true,
       message: "Cart items retrieved successfully",
-      // 👈 HERE
       cartItems: filteredCartItems,
       location: pickup_location,
       pincode: pickup_pincode,
-       user_pincode: userPincode,
-       userfulls:userfulls.address,
+      user_pincode: userPincode,
+      userfulladdress: userfulls.address,
       courierData: cheapestCourier,
       totalAmount,
       totalWeight
     });
 
   } catch (error) {
-    console.error("Error in getCartProducts:", error);
+    console.error("Error in getCartProducts:", error?.response?.data || error.message);
     res.status(500).json({
       error: "Internal Server Error",
-      details: error.message
+      details: error?.response?.data || error.message
     });
   }
 });
+
 
 
 

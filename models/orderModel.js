@@ -5,19 +5,21 @@ const orderSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   items: [
     {
-      product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-      quantity: { type: Number, required: true },
-      supplier_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-      verification_code: { type: String, required: true },
-      status: { type: String, enum: ["order", "confirmed", "shipped", "ontheway", "delivered", "cancelled"], default: "order" }, // Status for each item
+      product_name: { type: mongoose.Schema.Types.ObjectId, ref: "Products", required: true },
+      selling_price: { type: Number, required: true },
+      units: { type: Number, required: true },
+      
+      
+      // Status for each item
     },
   ],
+   status: { type: String, enum: ["order", "confirmed", "shipped", "ontheway", "delivered", "cancelled"], default: "order" },
   shipping_address: {
     name: { type: String, required: true },
     address: { type: String, required: true },
     pincode: { type: String, required: true },
     mobile_number: { type: String, required: true },
-    remark: { type: String },
+    
   },
   payment_method: { type: String, enum: ["online", "cod"], required: true },
   total_amount: { type: Number, required: true },

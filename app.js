@@ -11,7 +11,7 @@ const bodyParser = require("body-parser");
 const { userRoutes } = require("./routes/userRoutes.js");
 const { chatRoutes } = require("./routes/chatRoutes.js");
 const { shiprocketRoutes } = require("./routes/shiprocketRoutes.js");
-
+const orderRoutes = require("./routes/orderRoutes.js");
 const { messageRoutes } = require("./routes/messageRoutes.js");
 const { categoryRoutes } = require("./routes/categoryRoutes.js");
 const { cartRoutes } = require("./routes/cartRoutes.js");
@@ -99,6 +99,7 @@ app.use("/api/subscribe", subscribeRoutes);
 app.use("/api/comman", commanRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/order", orderRoutes);
 // --------------------------Routes------------------------------
 
 // --------------------------deploymentssssss------------------------------
