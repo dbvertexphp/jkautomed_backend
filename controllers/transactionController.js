@@ -1,72 +1,133 @@
 const asyncHandler = require("express-async-handler");
 const Transaction = require("../models/transactionModel");
+const mongoose = require("mongoose");
 const Order = require("../models/orderModel"); // Ensure correct import path
 const Product = require("../models/productModel");
 const { User } = require("../models/userModel");
 const { addNotification } = require("./orderNotificationController");
 const { sendFCMNotification } = require("./notificationControllers");
 
+// const addTransaction = asyncHandler(async (req, res) => {
+//   const user_id = req.headers.userID;
+//   const { order_id, payment_id, payment_status, total_amount, payment_method, status, user_name } = req.body;
+
+//   if (!order_id || !total_amount || !payment_method || !status) {
+//     return res.status(400).json({ message: "Invalid input", status: false });
+//   }
+
+//   try {
+//     // Fetch the order details
+//     const order = await Order.findById(order_id).populate("items.product_id");
+//     if (!order) {
+//       return res.status(404).json({ message: "Order not found", status: false });
+//     }
+
+//     // Aggregate amount by supplier and product
+//     const items = order.items.map((item) => ({
+//       product_id: item.product_id._id,
+//       supplier_id: item.supplier_id,
+//       amount: item.quantity * item.product_id.price,
+//     }));
+
+//     // Create a single transaction document
+//     const newTransaction = new Transaction({
+//       user_id,
+//       order_id,
+//       payment_id: payment_id || null,
+//       payment_status: payment_status || "pending",
+//       total_amount,
+//       payment_method,
+//       status,
+//       items,
+//       user_name,
+//     });
+
+//     const savedTransaction = await newTransaction.save();
+
+//     // Send notifications and add notifications for each supplier
+//     for (const item of items) {
+//       const supplier = await User.findById(item.supplier_id);
+//       if (supplier.firebase_token || user.firebase_token == "dummy_token") {
+//         const registrationToken = supplier.firebase_token;
+//         const title = "Product Purchase";
+//         const body = `A new transaction of ${item.amount} has been made for your products.`;
+//         const notificationResult = await sendFCMNotification(registrationToken, title, body);
+//         if (notificationResult.success) {
+//           console.log("Notification sent successfully:", notificationResult.response);
+//         } else {
+//           console.error("Failed to send notification:", notificationResult.error);
+//         }
+//         await addNotification(user_id, order_id, body, total_amount, [item.supplier_id], title, payment_method);
+//       }
+//     }
+
+//     res.status(201).json({
+//       message: "Transactions added successfully",
+//       transaction: savedTransaction,
+//     });
+//   } catch (error) {
+//     console.error("Error adding transactions:", error.message);
+//     res.status(500).json({ message: "Internal Server Error", status: false });
+//   }
+// });
 const addTransaction = asyncHandler(async (req, res) => {
-  const user_id = req.headers.userID;
-  const { order_id, payment_id, payment_status, total_amount, payment_method, status, user_name } = req.body;
-
-  if (!order_id || !total_amount || !payment_method || !status) {
-    return res.status(400).json({ message: "Invalid input", status: false });
-  }
-
   try {
-    // Fetch the order details
-    const order = await Order.findById(order_id).populate("items.product_id");
-    if (!order) {
-      return res.status(404).json({ message: "Order not found", status: false });
-    }
-
-    // Aggregate amount by supplier and product
-    const items = order.items.map((item) => ({
-      product_id: item.product_id._id,
-      supplier_id: item.supplier_id,
-      amount: item.quantity * item.product_id.price,
-    }));
-
-    // Create a single transaction document
-    const newTransaction = new Transaction({
+    const {
       user_id,
       order_id,
-      payment_id: payment_id || null,
+      payment_id,
+      payment_status,
+      total_amount,
+      payment_method,
+      user_name,
+    } = req.body;
+
+    // ✅ Validation
+    if (!user_id || !order_id || !total_amount || !payment_method) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id, order_id, total_amount and payment_method are required",
+      });
+    }
+
+    // ✅ Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(user_id)) {
+      return res.status(400).json({ success: false, message: "Invalid user_id" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(order_id)) {
+      return res.status(400).json({ success: false, message: "Invalid order_id" });
+    }
+
+    // 📝 Create Transaction object
+    const transaction = new Transaction({
+      user_id,
+      order_id,
+      payment_id: payment_id || "",
       payment_status: payment_status || "pending",
       total_amount,
       payment_method,
-      status,
-      items,
-      user_name,
+      user_name: user_name || "",
     });
 
-    const savedTransaction = await newTransaction.save();
-
-    // Send notifications and add notifications for each supplier
-    for (const item of items) {
-      const supplier = await User.findById(item.supplier_id);
-      if (supplier.firebase_token || user.firebase_token == "dummy_token") {
-        const registrationToken = supplier.firebase_token;
-        const title = "Product Purchase";
-        const body = `A new transaction of ${item.amount} has been made for your products.`;
-        const notificationResult = await sendFCMNotification(registrationToken, title, body);
-        if (notificationResult.success) {
-          console.log("Notification sent successfully:", notificationResult.response);
-        } else {
-          console.error("Failed to send notification:", notificationResult.error);
-        }
-        await addNotification(user_id, order_id, body, total_amount, [item.supplier_id], title, payment_method);
-      }
-    }
+    // 💾 Save to DB
+    const savedTransaction = await transaction.save();
 
     res.status(201).json({
-      message: "Transactions added successfully",
+      success: true,
+      message: "Transaction created successfully",
       transaction: savedTransaction,
     });
+
   } catch (error) {
-    console.error("Error adding transactions:", error.message);
-    res.status(500).json({ message: "Internal Server Error", status: false });
+    // 🔥 Detailed error logging
+    console.error("Transaction Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+      stack: error.stack,
+      full_error: error,
+    });
   }
 });
 

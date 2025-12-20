@@ -21,30 +21,30 @@ const transactionSchema = new Schema(
     payment_status: {
       type: String,
     },
-    status: { type: String, enum: ["order", "confirmed", "shipped", "ontheway", "delivered", "cancelled"], default: "order" },
+    status: { type: String, enum: ["pending","confirm","cancel"], default: "pending" },
     total_amount: {
       type: Number,
       required: true,
     },
-    payment_method: { type: String, enum: ["online", "cod"], required: true },
-    items: [
-      {
-        product_id: {
-          type: Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        supplier_id: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        amount: {
-          type: Number,
-          required: true,
-        },
-      },
-    ],
+    payment_method: { type: String, enum: ["online", "cod"], default: "online"  },
+    // items: [
+    //   {
+    //     product_id: {
+    //       type: Schema.Types.ObjectId,
+    //       ref: "Product",
+    //       required: true,
+    //     },
+    //     supplier_id: {
+    //       type: Schema.Types.ObjectId,
+    //       ref: "User",
+    //       required: true,
+    //     },
+    //     amount: {
+    //       type: Number,
+    //       required: true,
+    //     },
+    //   },
+    // ],
     datetime: {
       type: String,
       default: () => moment().tz("Asia/Kolkata").format("YYYY-MMM-DD hh:mm:ss A"),

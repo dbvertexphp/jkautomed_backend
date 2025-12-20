@@ -1,4 +1,26 @@
+import mongoose from "mongoose";
+import Order from "../models/orderModel.js";
 import { shiprocketRequest } from "../shiprocket.api.js";
+const mapShiprocketStatus = (shipment_status) => {
+  switch (shipment_status) {
+    case 1:
+      return "Pickup Scheduled";
+    case 2:
+      return "Pickup Done";
+    case 3:
+      return "On the way";
+    case 4:
+      return "Out for delivery";
+    case 7:
+      return "Delivered";
+    case 8:
+      return "RTO Initiated";
+    case 9:
+      return "RTO Delivered";
+    default:
+      return "pending";
+  }
+};
 
 export const createShiprocketOrder = async (req, res) => {
   try {
@@ -137,6 +159,91 @@ export const checkServiceability = async (req, res) => {
     res.status(500).json({
       success: false,
       message: err.response?.data || err.message
+    });
+  }
+};
+export const trackAndUpdateOrderStatus = async (req, res) => {
+  try {
+    const { order_db_id, user_id, awb } = req.body;
+
+    if (!order_db_id || !user_id || !awb) {
+      return res.status(400).json({
+        success: false,
+        message: "order_db_id, user_id and awb required",
+      });
+    }
+
+    // ✅ Validate ObjectId
+    if (
+      !mongoose.Types.ObjectId.isValid(order_db_id) ||
+      !mongoose.Types.ObjectId.isValid(user_id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid ObjectId format",
+      });
+    }
+
+    // 🔍 Find order by _id + user_id (both ObjectId)
+    const order = await Order.findOne({
+      _id: order_db_id,
+      user_id: user_id,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // 🚚 Shiprocket Tracking API (GET)
+    const trackRes = await shiprocketRequest(
+      "GET",
+      `https://apiv2.shiprocket.in/v1/external/courier/track/awb/${awb}`
+    );
+
+    const trackingData = trackRes.data?.tracking_data;
+
+    if (!trackingData) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid tracking data from Shiprocket",
+      });
+    }
+
+    const shipment_status = trackingData.shipment_status;
+    const current_status =
+      trackingData.shipment_track?.[0]?.current_status || "NA";
+
+    // 🔁 Map status
+    const updatedStatus = mapShiprocketStatus(shipment_status);
+
+    // 📝 Update order
+    order.status = updatedStatus;
+    order.updated_at = new Date();
+
+    await order.save();
+
+    // ✅ Response
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: {
+        order_db_id: order._id,
+        awb,
+        shipment_status,
+        shiprocket_status_text: current_status,
+        order_status: updatedStatus,
+        track_url: trackingData.track_url,
+      },
+    });
+  } catch (error) {
+    console.error("Tracking Error:", error.response?.data || error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: error.response?.data || error.message,
     });
   }
 };

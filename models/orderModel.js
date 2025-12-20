@@ -13,7 +13,21 @@ const orderSchema = new mongoose.Schema({
       // Status for each item
     },
   ],
-   status: { type: String, enum: ["pending","On the way","Delivered"], default: "order" },
+  status: { 
+  type: String, 
+  enum: [
+    "pending",
+    "Pickup Scheduled",
+    "Pickup Done",
+    "On the way",
+    "Out for Delivery",
+    "Delivered",
+    "RTO Initiated",
+    "RTO Delivered"
+  ], 
+  default: "pending" 
+},
+
   shipping_address: {
     name: { type: String, required: true },
     address: { type: String, required: true },
@@ -21,8 +35,8 @@ const orderSchema = new mongoose.Schema({
     mobile_number: { type: String, required: true },
     
   },
-   awb_number: { type: String, required: true },
-    courier_charge: { type: String, required: true },
+awb_number: { type: String, default: null },
+courier_charge: { type: Number, default: 0 },
   
   payment_method: { type: String, enum: ["online", "cod"], required: true },
   total_amount: { type: Number, required: true },
