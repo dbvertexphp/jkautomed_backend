@@ -13,6 +13,8 @@ const createOrder = asyncHandler(async (req, res) => {
     shipping_address,
     payment_method,
     total_amount,
+    awb_number,
+    courier_charge,
   } = req.body;
 
   if (
@@ -46,6 +48,8 @@ const createOrder = asyncHandler(async (req, res) => {
     shipping_address,
     payment_method,
     total_amount,
+    awb_number,
+    courier_charge,
     status: "pending",
   });
 
@@ -53,6 +57,7 @@ const createOrder = asyncHandler(async (req, res) => {
     status: true,
     message: "Order placed successfully",
     order_id: order.order_id,
+    awb_number: order.awb_number,
     data: order,
   });
 });

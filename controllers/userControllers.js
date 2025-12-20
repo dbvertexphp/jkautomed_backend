@@ -1977,7 +1977,11 @@ const getAllOrders = asyncHandler(async (req, res) => {
   try {
     const query = search
       ? {
-          $or: [{ "shipping_address.name": { $regex: search, $options: "i" } }, { payment_method: { $regex: search, $options: "i" } }, { order_id: { $regex: search, $options: "i" } }],
+          $or: [
+            { "shipping_address.name": { $regex: search, $options: "i" } },
+            { payment_method: { $regex: search, $options: "i" } },
+            { order_id: { $regex: search, $options: "i" } },
+          ],
         }
       : {};
 
@@ -1988,6 +1992,8 @@ const getAllOrders = asyncHandler(async (req, res) => {
       { $sort: { [sortBy]: order } },
       { $skip: (page - 1) * limit },
       { $limit: limit },
+
+      // USER JOIN
       {
         $lookup: {
           from: "users",
@@ -1997,33 +2003,17 @@ const getAllOrders = asyncHandler(async (req, res) => {
         },
       },
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+
+      // ITEMS
       { $unwind: "$items" },
-      {
-        $lookup: {
-          from: "users",
-          localField: "items.supplier_id",
-          foreignField: "_id",
-          as: "supplier",
-        },
-      },
-      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: "transactions",
-          localField: "_id",
-          foreignField: "order_id",
-          as: "transaction",
-        },
-      },
-      { $unwind: { path: "$transaction", preserveNullAndEmptyArrays: true } },
+
       {
         $project: {
           order_id: 1,
           total_amount: 1,
           payment_method: 1,
-          //   created_at: {
-          //     $dateToString: { format: "%Y-%m-%d %H:%M:%S", date: "$created_at" }
-          //   },
+          status: 1,
+
           created_at: {
             $dateToString: {
               format: "%Y-%m-%d %H:%M:%S",
@@ -2031,15 +2021,16 @@ const getAllOrders = asyncHandler(async (req, res) => {
               timezone: "+05:30",
             },
           },
+
           user_name: { $ifNull: ["$user.full_name", "N/A"] },
           user_email: "$user.email",
           user_mobile: "$user.mobile",
-          item_status: "$items.status",
-          product_id: "$items.product_id",
-          quantity: "$items.quantity",
-          verification_code: "$items.verification_code",
-          supplier_name: "$supplier.full_name",
-          payment_status: { $ifNull: ["$transaction.payment_status", "Cash"] },
+          awb_number: "$awb_number",
+          courier_charge: "$courier_charge",
+
+          product_name: "$items.product_name",
+          selling_price: "$items.selling_price",
+          quantity: "$items.units",   // ✅ FIX
         },
       },
     ]);
@@ -2052,10 +2043,11 @@ const getAllOrders = asyncHandler(async (req, res) => {
       status: true,
     });
   } catch (error) {
-    console.error("Error fetching orders:", error.message);
+    console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Internal Server Error", status: false });
   }
 });
+
 
 const getAllCancelOrders = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -2314,80 +2306,43 @@ const getAllCancelOrders = asyncHandler(async (req, res) => {
 
 const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
   const { order_id } = req.params;
-  console.log(order_id);
 
   try {
     if (!order_id) {
-      return res.status(404).json({ message: "Order ID is required", status: false });
+      return res.status(400).json({
+        status: false,
+        message: "Order ID is required",
+      });
     }
 
-    // Find the order by order_id
-    const order = await Order.findOne({ _id: order_id }) // Using order_id instead of _id
-      .populate({
-        path: "items.product_id",
-        populate: {
-          path: "supplier_id",
-          select: "full_name", // Assuming supplier schema has a field 'full_name'
-        },
-      });
+    // ✅ Find order by _id
+    const order = await Order.findById(order_id);
 
     if (!order) {
-      return res.status(404).json({ message: "Order not found", status: false });
+      return res.status(404).json({
+        status: false,
+        message: "Order not found",
+      });
     }
 
-    // Get all product IDs from the order
-    const productIds = order.items.map((item) => item.product_id._id);
-
-    // Find all ratings for these products
-    const ratings = await Rating.find({ product_id: { $in: productIds } });
-
-    // Create a map of product IDs to ratings
-    const ratingMap = ratings.reduce((map, rating) => {
-      map[rating.product_id.toString()] = true; // true indicates that the product has been rated
-      return map;
-    }, {});
-
-    // Organize order details
-    const supplierDetails = {};
-    order.items.forEach((item) => {
-      const supplierId = item.supplier_id._id.toString();
-      if (!supplierDetails[supplierId]) {
-        supplierDetails[supplierId] = {
-          total_amount: 0,
-          full_name: item.product_id.supplier_id.full_name,
-          verification_code: item.verification_code,
-          products: [],
-        };
-      }
-
-      const productIdStr = item.product_id._id.toString();
-      const hasRated = ratingMap[productIdStr] || false;
-
-      supplierDetails[supplierId].total_amount += item.product_id.price * item.quantity;
-      supplierDetails[supplierId].products.push({
-        status: item.status,
-        product_id: item.product_id._id,
-        quantity: item.quantity,
-        price: item.product_id.price,
-        product_images: item.product_id.product_images,
-        product_name: item.product_id.english_name,
-        has_rated: hasRated,
-      });
-    });
-
+    // ✅ Simple response (as per your schema)
     const response = {
       _id: order._id,
       order_id: order.order_id,
-      order_status: order.status,
+      status: order.status,
       payment_method: order.payment_method,
+      total_amount: order.total_amount,
+      shipping_address: order.shipping_address,
+      awb_number: order.awb_number,
+      courier_charge: order.courier_charge,
       created_at: order.created_at,
       updated_at: order.updated_at,
-      details: Object.keys(supplierDetails).map((supplierId) => ({
-        supplier_id: supplierId,
-        full_name: supplierDetails[supplierId].full_name,
-        verification_code: supplierDetails[supplierId].verification_code,
-        total_amount: supplierDetails[supplierId].total_amount,
-        products: supplierDetails[supplierId].products,
+
+      items: order.items.map(item => ({
+        product_name: item.product_name,
+        selling_price: item.selling_price,
+        quantity: item.units,
+        subtotal: item.selling_price * item.units,
       })),
     };
 
@@ -2396,11 +2351,16 @@ const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
       message: "Order details fetched successfully",
       order: response,
     });
+
   } catch (error) {
-    console.error("Error fetching order details:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error fetching order details:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 });
+
 
 const getUserOrderInAdmin = asyncHandler(async (req, res) => {
   const { userID } = req.body;

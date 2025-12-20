@@ -21,6 +21,9 @@ const orderSchema = new mongoose.Schema({
     mobile_number: { type: String, required: true },
     
   },
+   awb_number: { type: String, required: true },
+    courier_charge: { type: String, required: true },
+  
   payment_method: { type: String, enum: ["online", "cod"], required: true },
   total_amount: { type: Number, required: true },
   created_at: { type: Date, default: Date.now },
