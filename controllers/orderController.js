@@ -3,7 +3,7 @@ const Order = require("../models/orderModel");
 
 // 🔐 Unique Order ID Generator
 const generateOrderId = () => {
-  return `ORD-${Date.now()}-${Math.floor(10000 + Math.random() * 90000)}`;
+  return `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
 };
 
 const createOrder = asyncHandler(async (req, res) => {
