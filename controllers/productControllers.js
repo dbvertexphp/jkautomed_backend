@@ -150,7 +150,8 @@ const updateProduct = asyncHandler(async (req, res) => {
   try {
     const { productId } = req.params;
 
-    const {
+    // Destructure body
+    let {
       product_name,
       category_id,
       category_name,
@@ -176,24 +177,25 @@ const updateProduct = asyncHandler(async (req, res) => {
       });
     }
 
-    // 🖼️ Handle existing images
+    // 🖼️ Existing product images
     let product_images = product.product_images || [];
 
     // ❌ Remove selected images
-    if (remove_images && Array.isArray(remove_images)) {
-      product_images = product_images.filter((img) => !remove_images.includes(img));
+    if (remove_images) {
+      // If only 1 image, convert to array
+      if (!Array.isArray(remove_images)) remove_images = [remove_images];
+      product_images = product_images.filter(img => !remove_images.includes(img));
     }
 
-    // ✅ Merge newly uploaded images
+    // ✅ Add new uploaded images
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map((file) => file.path.replace(/\\/g, "/"));
+      const newImages = req.files.map(file => file.path.replace(/\\/g, "/"));
       product_images = [...product_images, ...newImages];
     }
 
-    // 🔢 Number parsing
+    // 🔢 Parse numbers
     const priceNum = price !== undefined ? Number(price) : product.price;
     const quantityNum = quantity !== undefined ? Number(quantity) : product.quantity;
-   
 
     // 📝 Update fields
     product.product_name = product_name || product.product_name;
@@ -210,7 +212,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.status = status !== undefined ? status : product.status;
     product.product_description = product_description || product.product_description;
 
-    // ✅ Shipment box update
+    // ✅ Update shipment box
     if (shipment_box) {
       product.shipment_box = {
         weight: shipment_box.weight || product.shipment_box?.weight || "",
@@ -220,6 +222,7 @@ const updateProduct = asyncHandler(async (req, res) => {
       };
     }
 
+    // Save product
     await product.save();
 
     res.status(200).json({
@@ -236,6 +239,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 
 const toggleProductStatus = async (req, res) => {

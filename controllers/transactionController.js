@@ -434,12 +434,7 @@ const getAllTransactionsInAdmin = asyncHandler(async (req, res) => {
   try {
     const pipeline = [
       // Match only online payments with success status
-      {
-        $match: {
-          payment_method: "online",
-          payment_status: "success",
-        },
-      },
+     
 
       // Lookup order details
       {
@@ -452,19 +447,9 @@ const getAllTransactionsInAdmin = asyncHandler(async (req, res) => {
       },
       { $unwind: { path: "$orderDetails", preserveNullAndEmptyArrays: true } },
 
-      // Unwind items so that each item appears separately
-      { $unwind: { path: "$items" } },
+     
 
-      // Lookup supplier details
-      {
-        $lookup: {
-          from: "users",
-          localField: "items.supplier_id",
-          foreignField: "_id",
-          as: "supplierDetails",
-        },
-      },
-      { $unwind: { path: "$supplierDetails", preserveNullAndEmptyArrays: true } },
+ 
 
       // Lookup user details (customer details)
       {
@@ -506,9 +491,9 @@ const getAllTransactionsInAdmin = asyncHandler(async (req, res) => {
           _id: 1,
           user_name: { $ifNull: ["$userDetails.full_name", "N/A"] },
           order_id: { $ifNull: ["$orderDetails.order_id", "N/A"] },
-          supplier_name: { $ifNull: ["$supplierDetails.full_name", "N/A"] },
+         
           product_id: "$items.product_id",
-          total_amount: "$items.amount",
+          total_amount: "$total_amount",
           quantity: { $ifNull: ["$items.quantity", 1] }, // Default quantity if missing
           payment_status: 1,
           payment_method: 1,
