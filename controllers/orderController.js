@@ -120,6 +120,90 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
     data: updatedOrders,
   });
 });
+const assignAwbAndUpdateOrder = asyncHandler (async(req, res) => {
+  try {
+    const { order_db_id, user_id, shipment_id, courier_id } = req.body;
+
+    if (!order_db_id || !user_id || !shipment_id || !courier_id) {
+      return res.status(400).json({
+        success: false,
+        message: "order_db_id, user_id, shipment_id, courier_id required",
+      });
+    }
+
+    // ✅ ObjectId validation
+    if (
+      !mongoose.Types.ObjectId.isValid(order_db_id) ||
+      !mongoose.Types.ObjectId.isValid(user_id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid ObjectId format",
+      });
+    }
+
+    // 🔍 1️⃣ Find Order by _id + user_id
+    const order = await Order.findOne({
+      _id: order_db_id,
+      user_id: user_id,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // 🚚 2️⃣ Assign AWB
+    const awbRes = await shiprocketRequest(
+      "POST",
+      "https://apiv2.shiprocket.in/v1/external/international/courier/assign/awb",
+      {
+        shipment_id,
+        courier_id,
+      }
+    );
+
+    if (awbRes.data?.awb_assign_status !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: "AWB assignment failed",
+        shiprocket: awbRes.data,
+      });
+    }
+
+    // 📦 3️⃣ Extract AWB
+    const awbData = awbRes.data.response.data;
+
+    // 📝 4️⃣ Update Order
+    order.awb_number = awbData.awb_code;
+    order.courier_charge = awbData.freight_charges;
+    order.status = "On the way";
+    order.updated_at = new Date();
+
+    await order.save();
+
+    // ✅ 5️⃣ Response
+    res.status(200).json({
+      success: true,
+      message: "AWB assigned & order updated successfully",
+      data: {
+        order_db_id: order._id,
+        order_id: order.order_id,
+        awb_number: order.awb_number,
+        courier_charge: order.courier_charge,
+      },
+    });
+
+  } catch (error) {
+    console.error("AWB Assign Error:", error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data || error.message,
+    });
+  }
+});
 
 
 module.exports = { createOrder, getOrdersByUserId };
