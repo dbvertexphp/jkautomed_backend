@@ -1,7 +1,7 @@
 {
-  "name": "tobuu_node",
+  "name": "jkautomated_backend",
   "version": "1.0.0",
-  "description": "social media website",
+  "description": "jk automated backend",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
