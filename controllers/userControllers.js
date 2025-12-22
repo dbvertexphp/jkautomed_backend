@@ -997,7 +997,7 @@ const getFavoriteProduct = asyncHandler(async (req, res) => {
       .populate({
         path: "product_id",
         model: "Product",
-        match: { delete_status: true }, // Filters products inside populate
+        // Filters products inside populate
       });
 
     if (!favorites.length) {
