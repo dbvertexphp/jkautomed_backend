@@ -14,6 +14,7 @@ const { shiprocketRoutes } = require("./routes/shiprocketRoutes.js");
 const orderRoutes = require("./routes/orderRoutes.js");
 const { messageRoutes } = require("./routes/messageRoutes.js");
 const { categoryRoutes } = require("./routes/categoryRoutes.js");
+const {notificationRoutes} = require("./routes/notificationRoutes.js");
 const { cartRoutes } = require("./routes/cartRoutes.js");
 const { videoRoutes } = require("./routes/videoRoutes.js");
 const { reelRoutes } = require("./routes/reelRoutes.js");
@@ -100,6 +101,7 @@ app.use("/api/comman", commanRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/notification", notificationRoutes);
 // --------------------------Routes------------------------------
 
 // --------------------------deploymentssssss------------------------------

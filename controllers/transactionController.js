@@ -6,6 +6,7 @@ const Product = require("../models/productModel");
 const { User } = require("../models/userModel");
 const { addNotification } = require("./orderNotificationController");
 const { sendFCMNotification } = require("./notificationControllers");
+// import { sendAndSaveNotification } from "../utils/sendAndSaveNotification.js";
 
 // const addTransaction = asyncHandler(async (req, res) => {
 //   const user_id = req.headers.userID;
@@ -111,6 +112,14 @@ const addTransaction = asyncHandler(async (req, res) => {
 
     // 💾 Save to DB
     const savedTransaction = await transaction.save();
+    await sendAndSaveNotification({
+      user_id: user._id,
+      firebase_token: user.firebase_token,
+      title: "Payment Successful 💳",
+      message: `₹${total_amount} payment received for Order #${order.order_id}`,
+      type: "payment",
+      order_id: order._id,
+    });
 
     res.status(201).json({
       success: true,

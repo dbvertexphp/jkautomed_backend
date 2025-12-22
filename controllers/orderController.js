@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Order = require("../models/orderModel");
+const axios = require("axios");
 
 // 🔐 Unique Order ID Generator
 const generateOrderId = () => {
@@ -61,5 +62,64 @@ const createOrder = asyncHandler(async (req, res) => {
     data: order,
   });
 });
+const getOrdersByUserId = asyncHandler(async (req, res) => {
+  const { user_id } = req.params;
 
-module.exports = { createOrder };
+  if (!user_id) {
+    return res.status(400).json({
+      status: false,
+      message: "user_id is required",
+    });
+  }
+
+  const orders = await Order.find({ user_id }).sort({ createdAt: -1 });
+
+  if (!orders || orders.length === 0) {
+    return res.status(404).json({
+      status: false,
+      message: "No orders found for this user",
+    });
+  }
+
+  // 🔁 Loop through orders and call tracking API if AWB exists
+  const updatedOrders = await Promise.all(
+    orders.map(async (order) => {
+      let trackingData = null;
+
+      if (order.awb_number) {
+        try {
+          const response = await axios.post(
+            "https://api.jkautomed.graphicsvolume.com/api/shiprocket/track-order",
+            {
+              order_db_id: order._id,
+              user_id: order.user_id,
+              awb: order.awb_number,
+            }
+          );
+
+          trackingData = response.data;
+        } catch (error) {
+          trackingData = {
+            status: false,
+            message: "Tracking API failed",
+            error: error.response?.data || error.message,
+          };
+        }
+      }
+
+      return {
+        ...order.toObject(),
+        tracking: trackingData, // 👈 tracking info attach
+      };
+    })
+  );
+
+  res.status(200).json({
+    status: true,
+    count: updatedOrders.length,
+    data: updatedOrders,
+  });
+});
+
+
+module.exports = { createOrder, getOrdersByUserId };
