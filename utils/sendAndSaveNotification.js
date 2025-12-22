@@ -1,7 +1,7 @@
-import admin from "../firebase.js";
-import Notification from "../models/notificationModel.js";
+const admin = require("../firebase");
+const Notification = require("../models/notificationModel");
 
-export const sendAndSaveNotification = async ({
+const sendAndSaveNotification = async ({
   user_id,
   firebase_token,
   title,
@@ -10,26 +10,25 @@ export const sendAndSaveNotification = async ({
   order_id = null,
 }) => {
   try {
-    // 🔔 Send Firebase notification (only if token exists)
-    if (firebase_token) {
-      const payload = {
-        token: firebase_token,
-        notification: {
-          title,
-          body: message,
-        },
-        android: {
-          priority: "high",
-        },
-      };
+    // 🔔 Firebase (non-blocking)
+    try {
+      if (firebase_token) {
+        const payload = {
+          token: firebase_token,
+          notification: {
+            title,
+            body: message,
+          },
+        };
 
-      await admin.messaging().send(payload);
-      console.log("✅ Firebase notification sent");
-    } else {
-      console.log("⚠️ No firebase token, skipping push");
+        await admin.messaging().send(payload);
+        console.log("✅ Firebase sent");
+      }
+    } catch (firebaseError) {
+      console.error("🔥 Firebase error (ignored):", firebaseError.message);
     }
 
-    // 💾 Save notification in DB
+    // 💾 DB SAVE (always runs)
     const notification = await Notification.create({
       user_id,
       title,
@@ -38,15 +37,15 @@ export const sendAndSaveNotification = async ({
       order_id,
     });
 
-    return {
-      success: true,
-      notification,
-    };
+    console.log("🔥 Notification created:", notification._id);
+
+    return { success: true, notification };
+
   } catch (error) {
-    console.error("❌ Notification Error:", error.message);
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error("❌ DB Error:", error);
+    return { success: false, error: error.message };
   }
 };
+
+
+module.exports = sendAndSaveNotification;

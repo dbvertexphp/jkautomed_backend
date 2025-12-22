@@ -6,7 +6,10 @@ const Product = require("../models/productModel");
 const { User } = require("../models/userModel");
 const { addNotification } = require("./orderNotificationController");
 const { sendFCMNotification } = require("./notificationControllers");
-// import { sendAndSaveNotification } from "../utils/sendAndSaveNotification.js";
+const sendAndSaveNotification = require("../utils/sendAndSaveNotification");
+
+
+
 
 // const addTransaction = asyncHandler(async (req, res) => {
 //   const user_id = req.headers.userID;
@@ -112,13 +115,28 @@ const addTransaction = asyncHandler(async (req, res) => {
 
     // 💾 Save to DB
     const savedTransaction = await transaction.save();
+
+    // 🔍 Fetch user firebase_token
+    const user = await User.findById(user_id).select("firebase_token full_name");
+    let firebaseTokenToUse = null;
+    if (user && user.firebase_token && user.firebase_token !== "dummy_token") {
+      firebaseTokenToUse = user.firebase_token;
+    } else {
+      console.log("⚠️ Firebase token missing or dummy, push skipped");
+    }
+
+    // 🔍 Fetch order details for order number
+    const order = await Order.findById(order_id).select("order_id");
+    const orderNumber = order ? order.order_id : "UNKNOWN";
+
+    // 🔔 Send & save notification
     await sendAndSaveNotification({
-      user_id: user._id,
-      firebase_token: user.firebase_token,
+      user_id,
+      firebase_token: firebaseTokenToUse,
       title: "Payment Successful 💳",
-      message: `₹${total_amount} payment received for Order #${order.order_id}`,
+      message: `₹${total_amount} payment received for Order #${orderNumber}`,
       type: "payment",
-      order_id: order._id,
+      order_id: order_id,
     });
 
     res.status(201).json({
@@ -128,7 +146,6 @@ const addTransaction = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    // 🔥 Detailed error logging
     console.error("Transaction Error:", error);
     res.status(500).json({
       success: false,
@@ -139,6 +156,7 @@ const addTransaction = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 // Get all transactions with optional filtering, sorting, and pagination
 // const getAllTransactions = asyncHandler(async (req, res) => {
