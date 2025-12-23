@@ -1,7 +1,8 @@
 const express = require("express");
 const { DeleteCategory, GetSingleCategoryByName, GetAllCategoriesAdmin } = require("../controllers/categoryControllers.js");
 const protect = require("../middleware/authMiddleware.js");
-const { createSubcategory, updateSubCategory, getAllSubCategoriesAdminpage, getSubCategoryByCategoryId, getAllSubCategories, getSubCategoryByCategoryIdInAdmin } = require("../controllers/subCategoryController.js");
+  
+const { createSubcategory, deleteSubCategory,updateSubCategory, getAllSubCategoriesAdminpage, getSubCategoryByCategoryId, getAllSubCategories, getSubCategoryByCategoryIdInAdmin, } = require("../controllers/subCategoryController.js");
 
 const subCategoryRoutes = express.Router();
 
@@ -14,5 +15,7 @@ subCategoryRoutes.route("/GetCategoryByName").post(GetSingleCategoryByName);
 subCategoryRoutes.route("/GetSubCategoryByCategoryId").post(getSubCategoryByCategoryId);
 subCategoryRoutes.route("/getSubCategoryByCategoryIdInAdmin/:category_id").get(protect, getSubCategoryByCategoryIdInAdmin);
 subCategoryRoutes.route("/DeleteCategory").post(protect, DeleteCategory);
+subCategoryRoutes.post("/deleteSubCategory", deleteSubCategory);
+
 
 module.exports = { subCategoryRoutes };

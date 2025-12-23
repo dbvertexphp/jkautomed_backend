@@ -46,6 +46,53 @@ const createSubcategory = asyncHandler(async (req, res, next) => {
     });
   });
 });
+const deleteSubCategory = asyncHandler(async (req, res, next) => {
+  try {
+    const { category_id, subcategory_id } = req.body;
+
+
+    if (!category_id || !subcategory_id) {
+      return res.status(400).json({
+        status: false,
+        message: "category_id and subcategory_id are required",
+      });
+    }
+
+    // 🔍 Find category
+    const category = await Category.findById(category_id);
+    if (!category) {
+      return res.status(404).json({
+        status: false,
+        message: "Category not found",
+      });
+    }
+
+    // ❌ Remove subcategory by _id
+    const originalLength = category.subcategories.length;
+    category.subcategories = category.subcategories.filter(
+      (sub) => sub._id.toString() !== subcategory_id
+    );
+
+    if (category.subcategories.length === originalLength) {
+      return res.status(404).json({
+        status: false,
+        message: "Subcategory not found",
+      });
+    }
+
+    // 💾 Save updated category
+    await category.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Subcategory deleted successfully",
+      subcategories: category.subcategories,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 // subCategoryController.js -> updateSubCategory function ko replace karo isse
 const updateSubCategory = asyncHandler(async (req, res, next) => {
@@ -434,4 +481,5 @@ module.exports = {
   getAllSubCategoriesAdminpage,
   getSubCategoryByCategoryId,
   getSubCategoryByCategoryIdInAdmin,
+  deleteSubCategory
 };

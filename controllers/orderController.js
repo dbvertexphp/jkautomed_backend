@@ -216,8 +216,7 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
     });
   }
 
- const baseUrl = `${req.protocol}://${req.get("host")}`;
-
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
 
   const orders = await Order.find({ user_id })
     .sort({ created_at: -1 })
@@ -226,7 +225,7 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
       select: "product_name product_images",
     })
     .lean();
-  console.log("ordere", orders)
+
   if (!orders.length) {
     return res.status(404).json({
       status: false,
@@ -234,21 +233,35 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
     });
   }
 
-  const formattedOrders = orders.map(order => ({
-    ...order,
-    items: order.items.map(item => ({
-      _id: item._id,
-      product_id: item.product_id?._id || null,
-      product_name: item.product_id?.product_name || item.product_name,
-      selling_price: item.selling_price,
-      units: item.units,
-      product_images: item.product_id?.product_images
-        ? item.product_id.product_images.map(
-            img => `${baseUrl}/${img.replace(/^\/+/, "")}`
-          )
-        : [],
-    })),
-  }));
+  const formattedOrders = orders
+    .map(order => {
+      // Filter items with valid product_id
+      const validItems = order.items
+        .map(item => {
+          const product = item.product_id;
+          if (!product) return null; // skip invalid product_id
+
+          return {
+            _id: item._id,
+            product_id: product._id,
+            product_name: product.product_name || "N/A",
+            selling_price: item.selling_price,
+            units: item.units,
+            product_images: product.product_images?.length
+              ? product.product_images.map(img => `${baseUrl}/${img.replace(/^\/+/, "")}`)
+              : [],
+          };
+        })
+        .filter(Boolean); // remove nulls
+
+      if (!validItems.length) return null; // skip order if no valid items
+
+      return {
+        ...order,
+        items: validItems,
+      };
+    })
+    .filter(Boolean); // remove orders with no valid items
 
   res.status(200).json({
     status: true,
@@ -256,6 +269,8 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
     data: formattedOrders,
   });
 });
+
+
 
 
 
