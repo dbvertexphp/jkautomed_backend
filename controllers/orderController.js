@@ -226,7 +226,7 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
       select: "product_name product_images",
     })
     .lean();
-
+  console.log("ordere", orders)
   if (!orders.length) {
     return res.status(404).json({
       status: false,
