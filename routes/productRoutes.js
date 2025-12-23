@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const protect = require("../middleware/authMiddleware.js");
-const { createProduct, getAllProducts, deleteProductById, toggleProductStatus,updateProduct,getProductById,getProductsByCategory, getRelatedProducts } = require("../controllers/productControllers.js");
+const { createProduct, getAllProducts, deleteProductById, toggleProductStatus,updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct } = require("../controllers/productControllers.js");
 
 // Multer setup for image upload
 const storage = multer.diskStorage({
@@ -24,6 +24,9 @@ router.put("/status/:id",toggleProductStatus);
 router.put("/update-product/:productId", upload.array("product_images", 10),updateProduct);
 router.post("/getProductsByCategory", protect, getProductsByCategory);
 router.post("/getRelatedProducts", protect, getRelatedProducts);
+router.post("/recent-products", protect,recentProduct);
+
+
 
 router.get("/all", getAllProducts);
 router.get("/get-product/:id", getProductById);

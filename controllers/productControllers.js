@@ -71,6 +71,61 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 });
+const recentProduct = asyncHandler(async (req, res) => {
+  try {
+    const { category_id, subcategory_ids } = req.body;
+
+    if (!category_id || !Array.isArray(subcategory_ids) || !subcategory_ids.length) {
+      return res.status(400).json({
+        status: false,
+        message: "category_id and subcategory_ids array are required",
+      });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    const products = await Products.find({
+      status: 1,
+      category_id: category_id,
+      subcategory_id: { $in: subcategory_ids },
+    })
+      .sort({ created_at: -1 }) 
+      .limit(10)
+      .lean();
+
+    if (!products.length) {
+      return res.status(404).json({
+        status: false,
+        message: "No recent products found",
+      });
+    }
+
+    const formattedProducts = products.map(product => ({
+      _id: product._id,
+      product_name: product.product_name,
+      category_id: product.category_id,
+      subcategory_id: product.subcategory_id,
+      price: product.price,
+      quantity: product.quantity,
+      product_images: product.product_images?.map(
+        img => `${baseUrl}/${img.replace(/^\/+/, "")}`
+      ),
+      created_at: product.created_at,
+    }));
+
+    res.status(200).json({
+      status: true,
+      total: formattedProducts.length,
+      data: formattedProducts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
 
 
 
@@ -380,4 +435,4 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory, getRelatedProducts };
+module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct };
