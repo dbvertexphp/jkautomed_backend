@@ -91,7 +91,6 @@ const getProductById = asyncHandler(async (req, res) => {
     }
 
     const baseUrl = process.env.BASE_URL; 
-    // example: https://api.example.com
 
     // 🔥 product_images ko full URL me convert
     product.product_images = product.product_images.map(img =>
@@ -112,6 +111,8 @@ const getProductById = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
 const getProductsByCategory = asyncHandler(async (req, res) => {
   const { categoryId, subcategoryIds } = req.body;
 
@@ -141,6 +142,47 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
     status: true,
     total: products.length,
     products
+  });
+});
+
+
+const getRelatedProducts = asyncHandler(async (req, res) => {
+  const { categoryId, subcategoryIds, productId } = req.body;
+
+  // 🔎 Validation
+  if (!categoryId || !Array.isArray(subcategoryIds) || !subcategoryIds.length) {
+    return res.status(400).json({
+      status: false,
+      message: "categoryId and subcategoryIds array are required",
+    });
+  }
+
+  let products = await Products.find({
+    category_id: categoryId,
+    subcategory_id: { $in: subcategoryIds },
+    status: 1,
+    ...(productId && { _id: { $ne: productId } }),
+  }).lean();
+
+  const baseUrl = process.env.BASE_URL;
+
+  products = products.map((p) => ({
+    ...p,
+    product_images: p.product_images?.map(
+      (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
+    ),
+  }));
+
+  // 🎲 Shuffle products (Fisher–Yates)
+  for (let i = products.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [products[i], products[j]] = [products[j], products[i]];
+  }
+
+  res.status(200).json({
+    status: true,
+    total: products.length,
+    products,
   });
 });
 
@@ -182,10 +224,17 @@ const updateProduct = asyncHandler(async (req, res) => {
 
     // ❌ Remove selected images
     if (remove_images) {
-      // If only 1 image, convert to array
-      if (!Array.isArray(remove_images)) remove_images = [remove_images];
-      product_images = product_images.filter(img => !remove_images.includes(img));
-    }
+    // Agar single string hai toh array banao, agar pehle se array hai toh waisa hi rehne do
+    const imagesToDelete = Array.isArray(remove_images) ? remove_images : [remove_images];
+    
+    console.log("Images to remove:", imagesToDelete); // Debugging ke liye
+
+    product_images = product_images.filter(img => {
+        // .includes tabhi kaam karega jab string exact match ho
+        // Hum dono taraf se whitespace trim kar dete hain safety ke liye
+        return !imagesToDelete.some(rem => rem.trim() === img.trim());
+    });
+}
 
     // ✅ Add new uploaded images
     if (req.files && req.files.length > 0) {
@@ -282,6 +331,8 @@ const toggleProductStatus = async (req, res) => {
     });
   }
 };
+
+
 const deleteProductById = async (req, res) => {
   try {
     const { id } = req.params; // URL me id pass karenge
@@ -309,6 +360,8 @@ const deleteProductById = async (req, res) => {
     res.status(500).json({ status: false, message: "Server Error" });
   }
 };
+
+
 const getAllProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Products.find().sort({ createdAt: -1 });
@@ -327,4 +380,4 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory };
+module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory, getRelatedProducts };
