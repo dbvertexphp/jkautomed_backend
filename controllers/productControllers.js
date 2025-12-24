@@ -126,7 +126,10 @@ const getProductById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Products.findById(id).lean();
+  const product = await Products.findOne({
+  _id: id,
+  status: 1
+}).lean();
 
     if (!product) {
       return res.status(404).json({

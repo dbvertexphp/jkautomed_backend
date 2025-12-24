@@ -24,7 +24,7 @@ router.put("/status/:id",toggleProductStatus);
 router.put("/update-product/:productId", upload.array("product_images", 10),updateProduct);
 router.post("/getProductsByCategory", protect, getProductsByCategory);
 router.post("/getRelatedProducts", protect, getRelatedProducts);
-router.post("/recent-products", protect,recentProduct);
+router.get("/recent-products", protect,recentProduct);
 
 
 
