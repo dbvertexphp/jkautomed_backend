@@ -1,26 +1,12 @@
 const asyncHandler = require("express-async-handler");
 const Products = require("../models/productsModel.js");
 
-const generatePartNumber = async () => {
-  let isUnique = false;
-  let partNumber = "";
 
-  while (!isUnique) {
-    partNumber = "PN" + Date.now().toString().slice(-6);
-
-    const exists = await Products.findOne({ part_number: partNumber });
-    if (!exists) {
-      isUnique = true;
-    }
-  }
-
-  return partNumber;
-};
 
 
 const createProduct = asyncHandler(async (req, res) => {
   try {
-    const part_number = await generatePartNumber();
+   
     const {
       product_name,
       category_id,
@@ -34,7 +20,9 @@ const createProduct = asyncHandler(async (req, res) => {
       // unit_value,
       shipment_box,   // { weight, box_length, box_breadth, box_height }
       product_description,
-      reference_number, // HTML string from React Quill
+      reference_number,
+      part_number,
+       // HTML string from React Quill
     } = req.body;
 
     // Multiple images
@@ -68,7 +56,7 @@ const createProduct = asyncHandler(async (req, res) => {
       product_images, // array of image paths
       price: priceNum,
       quantity: quantityNum,
-       part_number,                 // ✅ AUTO UNIQUE
+       part_number:part_number || null,               // ✅ AUTO UNIQUE
   reference_number: reference_number || null,
       // size,           // TEXT
       // unit_type,
@@ -292,6 +280,7 @@ const updateProduct = asyncHandler(async (req, res) => {
       shipment_box, // { weight, box_length, box_breadth, box_height }
       remove_images,
       reference_number,
+      part_number,
       // array of images to remove
     } = req.body;
 
@@ -346,6 +335,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.status = status !== undefined ? status : product.status;
     product.product_description = product_description || product.product_description;
     product.reference_number = reference_number || product.reference_number;
+    product.part_number = part_number || product.part_number;
 
     // ✅ Update shipment box
     if (shipment_box) {

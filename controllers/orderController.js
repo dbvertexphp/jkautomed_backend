@@ -250,6 +250,7 @@ const getOrdersByUserId = asyncHandler(async (req, res) => {
             product_images: product.product_images?.length
               ? product.product_images.map(img => `${baseUrl}/${img.replace(/^\/+/, "")}`)
               : [],
+              review_added:false,
           };
         })
         .filter(Boolean); // remove nulls
