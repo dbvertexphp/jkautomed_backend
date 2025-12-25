@@ -190,7 +190,12 @@ const updateSubCategory = asyncHandler(async (req, res, next) => {
 
 const getAllSubCategories = asyncHandler(async (req, res) => {
   try {
-    // Fetch all categories from the database
+    const { page = 1, search = "" } = req.query; // 🔥 page & search
+    const perPage = 5;
+
+    const skip = (page - 1) * perPage;
+
+    // 🔥 Fetch all categories
     const categories = await Category.find().sort({ category_name: 1 });
 
     if (!categories || categories.length === 0) {
@@ -200,11 +205,12 @@ const getAllSubCategories = asyncHandler(async (req, res) => {
       });
     }
 
-    const subcategories = [];
+    let subcategories = [];
+
     categories.forEach((category) => {
       category.subcategories.forEach((subcategory) => {
         subcategories.push({
-          category_id: category._id.toString(), // <- add this
+          category_id: category._id.toString(),
           category_name: category.category_name,
           subcategory_id: subcategory._id.toString(),
           subcategory_name: subcategory.subcategory_name,
@@ -214,12 +220,34 @@ const getAllSubCategories = asyncHandler(async (req, res) => {
       });
     });
 
-    // Sort subcategories alphabetically
-    const sortedSubcategories = subcategories.sort((a, b) => {
-      return a.subcategory_name.localeCompare(b.subcategory_name);
-    });
+    // 🔍 SEARCH FILTER
+    if (search) {
+      const searchLower = search.toLowerCase();
+      subcategories = subcategories.filter(
+        (item) =>
+          item.subcategory_name.toLowerCase().includes(searchLower) ||
+          item.category_name.toLowerCase().includes(searchLower)
+      );
+    }
 
-    res.status(200).json(sortedSubcategories);
+    // 🔃 SORT BY NAME
+    subcategories.sort((a, b) =>
+      a.subcategory_name.localeCompare(b.subcategory_name)
+    );
+
+    const totalCount = subcategories.length;
+    const totalPages = Math.ceil(totalCount / perPage);
+
+    // 🔥 PAGINATION SLICE
+    const paginatedData = subcategories.slice(skip, skip + perPage);
+
+    res.status(200).json({
+      status: true,
+      current_page: Number(page),
+      total_pages: totalPages,
+      total_count: totalCount,
+      data: paginatedData,
+    });
   } catch (error) {
     console.error("Error fetching subcategories:", error);
     res.status(500).json({
@@ -228,6 +256,7 @@ const getAllSubCategories = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 const DeleteCategory = asyncHandler(async (req, res) => {
   const { categoryId } = req.body;

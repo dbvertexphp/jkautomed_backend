@@ -11,6 +11,9 @@ const ProductSchema = new Schema(
     product_images: { type: [String], default: [] },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
+    part_number: { type: String, unique: true, required: true },
+    reference_number: {type: String,default: null},
+
     // size: { type: String, required: true },
 //     unit_type: { type: String, required: true }, // piece, set, liter
 // unit_value: { type: Number, required: true }, // 1, 2, 500

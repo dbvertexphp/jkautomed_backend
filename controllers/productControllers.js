@@ -1,8 +1,26 @@
 const asyncHandler = require("express-async-handler");
 const Products = require("../models/productsModel.js");
 
+const generatePartNumber = async () => {
+  let isUnique = false;
+  let partNumber = "";
+
+  while (!isUnique) {
+    partNumber = "PN" + Date.now().toString().slice(-6);
+
+    const exists = await Products.findOne({ part_number: partNumber });
+    if (!exists) {
+      isUnique = true;
+    }
+  }
+
+  return partNumber;
+};
+
+
 const createProduct = asyncHandler(async (req, res) => {
   try {
+    const part_number = await generatePartNumber();
     const {
       product_name,
       category_id,
@@ -15,7 +33,8 @@ const createProduct = asyncHandler(async (req, res) => {
       // unit_type,
       // unit_value,
       shipment_box,   // { weight, box_length, box_breadth, box_height }
-      product_description, // HTML string from React Quill
+      product_description,
+      reference_number, // HTML string from React Quill
     } = req.body;
 
     // Multiple images
@@ -49,6 +68,8 @@ const createProduct = asyncHandler(async (req, res) => {
       product_images, // array of image paths
       price: priceNum,
       quantity: quantityNum,
+       part_number,                 // ✅ AUTO UNIQUE
+  reference_number: reference_number || null,
       // size,           // TEXT
       // unit_type,
       // unit_value: unitValueNum,
@@ -255,7 +276,9 @@ const updateProduct = asyncHandler(async (req, res) => {
       status,
       product_description,
       shipment_box, // { weight, box_length, box_breadth, box_height }
-      remove_images // array of images to remove
+      remove_images,
+      reference_number,
+      // array of images to remove
     } = req.body;
 
     // 🔍 Find product
@@ -308,6 +331,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.product_images = product_images;
     product.status = status !== undefined ? status : product.status;
     product.product_description = product_description || product.product_description;
+    product.reference_number = reference_number || product.reference_number;
 
     // ✅ Update shipment box
     if (shipment_box) {
@@ -411,21 +435,35 @@ const deleteProductById = async (req, res) => {
 
 
 const getAllProducts = asyncHandler(async (req, res) => {
-  try {
-    const products = await Products.find().sort({ createdAt: -1 });
-    res.status(200).json({
-      status: true,
-      message: "Products fetched successfully",
-      products,
-    });
-  } catch (error) {
-    console.error("Get products error:", error);
-    res.status(500).json({
-      status: false,
-      message: error.message || "Internal server error",
-      error,
-    });
-  }
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || "";
+
+
+  const query = search
+    ? {
+        $or: [
+          { product_name: { $regex: search, $options: "i" } },
+          { part_number: { $regex: search, $options: "i" } }
+        ]
+      }
+    : {};
+
+  const totalProducts = await Products.countDocuments(query);
+
+  const products = await Products.find(query)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: true,
+    products,
+    page,
+    totalPages: Math.ceil(totalProducts / limit),
+    totalProducts,
+  });
 });
+
 
 module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct };

@@ -38,7 +38,7 @@ const { addNotification } = require("./orderNotificationController");
 const { sendFCMNotification } = require("./notificationControllers");
 const sendEmail = require("../utils/emailSender");
 const argon2 = require("argon2");
-const Products = require("../models/productModel.js");
+const Products = require("../models/productsModel.js");
 
 const getUsers = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -2305,6 +2305,7 @@ const getAllCancelOrders = asyncHandler(async (req, res) => {
 //       }
 //     });
 
+
 const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
   const { order_id } = req.params;
 
@@ -2316,7 +2317,7 @@ const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
       });
     }
 
-    // ✅ Find order by _id
+    // Find order by _id
     const order = await Order.findById(order_id);
 
     if (!order) {
@@ -2326,7 +2327,30 @@ const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
       });
     }
 
-    // ✅ Simple response (as per your schema)
+    // Map order items and fetch product details from Products collection
+    const itemsWithProductData = await Promise.all(
+  order.items.map(async (item) => {
+    // Fetch full product data
+    const product = await Products.findById(item.product_id);
+
+    if (!product) return null; // safety check
+
+    // Merge order item data into product object
+    const productWithOrderData = {
+      ...product.toObject(),  // convert mongoose doc to plain object
+      selling_price: item.selling_price,
+      units: item.units,
+      subtotal: item.selling_price * item.units,
+    };
+
+    return {
+      product_id: item.product_id,
+      product: productWithOrderData,
+    };
+  })
+);
+
+    // Construct response
     const response = {
       _id: order._id,
       order_id: order.order_id,
@@ -2338,13 +2362,7 @@ const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
       courier_charge: order.courier_charge,
       created_at: order.created_at,
       updated_at: order.updated_at,
-
-      items: order.items.map(item => ({
-        product_name: item.product_name,
-        selling_price: item.selling_price,
-        quantity: item.units,
-        subtotal: item.selling_price * item.units,
-      })),
+      items: itemsWithProductData,
     };
 
     res.status(200).json({
@@ -2361,6 +2379,7 @@ const getProductsByOrderAndSupplier = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 
 const getUserOrderInAdmin = asyncHandler(async (req, res) => {
