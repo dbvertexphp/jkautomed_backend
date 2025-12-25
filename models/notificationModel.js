@@ -15,6 +15,10 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    product_id: {
+      type: String,
+      default:null,
+    },
     type: {
       type: String,
       enum: ["order", "payment", "general"],

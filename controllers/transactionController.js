@@ -133,8 +133,8 @@ const addTransaction = asyncHandler(async (req, res) => {
     await sendAndSaveNotification({
       user_id,
       firebase_token: firebaseTokenToUse,
-      title: "Payment Successful 💳",
-      message: `₹${total_amount} payment received for Order #${orderNumber}`,
+      title: "Your Order Successfully Ordered",
+      message: `Your Payment of ${total_amount} has been Confirmed`,
       type: "payment",
       order_id: order_id,
     });

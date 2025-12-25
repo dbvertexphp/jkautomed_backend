@@ -912,40 +912,62 @@ const addFavoriteProduct = asyncHandler(async (req, res) => {
   const userID = req.headers.userID;
 
   try {
-    // Validate product_id and userID
     if (!product_id) {
-      return res.status(400).json({ message: "Product ID is required", status: false });
-    }
-    if (!userID) {
-      return res.status(400).json({ message: "User ID is required", status: false });
+      return res.status(400).json({
+        status: false,
+        message: "Product ID is required",
+      });
     }
 
-    // Check if the product exists
+    if (!userID) {
+      return res.status(400).json({
+        status: false,
+        message: "User ID is required",
+      });
+    }
+
+    // ✅ Check product exists
     const product = await Product.findById(product_id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found", status: false });
+      return res.status(404).json({
+        status: false,
+        message: "Product not found",
+      });
     }
 
-    // Create a new favorite record
-    const favorite = new Favorite({
+    // ✅ Check already favorite
+    const alreadyFavorite = await Favorite.findOne({
+      user_id: userID,
+      product_id: product_id,
+    });
+
+    if (alreadyFavorite) {
+      return res.status(409).json({
+        status: false,
+        message: "Product already added to favorites",
+      });
+    }
+
+    // ✅ Create favorite
+    const favorite = await Favorite.create({
       user_id: userID,
       product_id,
     });
 
-    // Save the favorite record
-    await favorite.save();
-
-    // Return success response
     res.status(201).json({
       status: true,
       message: "Product added to favorites successfully",
       favorite,
     });
   } catch (error) {
-    console.error("Error adding favorite product:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error adding favorite product:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 });
+
 
 // Define the removeFavoriteProduct function
 const removeFavoriteProduct = asyncHandler(async (req, res) => {

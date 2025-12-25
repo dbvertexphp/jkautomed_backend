@@ -8,6 +8,7 @@ const sendAndSaveNotification = async ({
   message,
   type = "general",
   order_id = null,
+  product_id=null,
 }) => {
   try {
     // 🔔 Firebase (non-blocking)
@@ -35,6 +36,8 @@ const sendAndSaveNotification = async ({
       message,
       type,
       order_id,
+      product_id,
+
     });
 
     console.log("🔥 Notification created:", notification._id);

@@ -13,6 +13,30 @@ const ProductSchema = new Schema(
     quantity: { type: Number, required: true },
     part_number: { type: String, unique: true, required: true },
     reference_number: {type: String,default: null},
+    
+    reviews: [
+  {
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    rating: {
+      type: Number,
+      required: true,   // 1–5
+      min: 1,
+      max: 5,
+    },
+    review: {
+      type: String,     // user ka comment
+      default: "",
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+],
 
     // size: { type: String, required: true },
 //     unit_type: { type: String, required: true }, // piece, set, liter

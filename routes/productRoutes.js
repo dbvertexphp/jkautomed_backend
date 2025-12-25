@@ -1,16 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const path = require("path");
 const protect = require("../middleware/authMiddleware.js");
 const { createProduct, getAllProducts, deleteProductById, toggleProductStatus,updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct } = require("../controllers/productControllers.js");
 
 // Multer setup for image upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // make sure folder exists
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+    const ext = path.extname(file.originalname); // .png .jpg
+    const uniqueName = `${Date.now()}-${Math.floor(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
   },
 });
 

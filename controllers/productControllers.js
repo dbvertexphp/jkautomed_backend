@@ -117,6 +117,10 @@ const recentProduct = asyncHandler(async (req, res) => {
       subcategory_id: product.subcategory_id,
       price: product.price,
       quantity: product.quantity,
+      part_number:product.part_number || null,
+      reference_number:product.reference_number ||null,
+      category_name:product.category_name ||null,
+      subcategory_name:product.subcategory_name ||null,
       product_images: product.product_images?.map(
         (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
       ),
@@ -189,30 +193,38 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
   if (!categoryId || !Array.isArray(subcategoryIds) || !subcategoryIds.length) {
     return res.status(400).json({
       status: false,
-      message: "categoryId and subcategoryIds array are required"
+      message: "categoryId and subcategoryIds array are required",
     });
   }
 
-  const products = await Products.find({
+  let products = await Products.find({
     category_id: categoryId,
     subcategory_id: { $in: subcategoryIds },
-    status: 1
+    status: 1,
   }).lean();
 
   const baseUrl = process.env.BASE_URL;
 
-  products.forEach(p => {
-    p.product_images = p.product_images.map(img =>
-      `${baseUrl}/${img.replace(/^\/+/, "")}`
-    );
-  });
+  products = products.map((p) => ({
+    ...p,
+
+    // 🔹 images full url
+    product_images: p.product_images?.map(
+      (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
+    ),
+
+    // 🔥 rating fields (abhi 0)
+    avgRating: 0,
+    totalRating: 0,
+  }));
 
   res.status(200).json({
     status: true,
     total: products.length,
-    products
+    products,
   });
 });
+
 
 
 const getRelatedProducts = asyncHandler(async (req, res) => {
@@ -237,6 +249,8 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
 
   products = products.map((p) => ({
     ...p,
+     part_number: p.part_number || null,             // ✅ agar nahi hai toh null
+    reference_number: p.reference_number || null, 
     product_images: p.product_images?.map(
       (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
     ),
