@@ -5,21 +5,21 @@ const mapShiprocketStatus = (shipment_status) => {
   switch (shipment_status) {
     case 1: // Pickup Scheduled
     case 2: // Pickup Done
-      return "pending";
+      return "Pending";
 
     case 3: // In Transit
     case 4: // Out for Delivery
-      return "on_the_way";
+      return "On the way";
 
     case 7: // Delivered
-      return "delivered";
+      return "Delivered";
 
     case 8: // RTO Initiated
     case 9: // RTO Delivered
-      return "cancelled";
+      return "Cancelled";
 
     default:
-      return "pending";
+      return "Pending";
   }
 };
 
