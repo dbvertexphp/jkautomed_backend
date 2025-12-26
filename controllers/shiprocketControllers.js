@@ -3,24 +3,26 @@ import Order from "../models/orderModel.js";
 import { shiprocketRequest } from "../shiprocket.api.js";
 const mapShiprocketStatus = (shipment_status) => {
   switch (shipment_status) {
-    case 1:
-      return "Pickup Scheduled";
-    case 2:
-      return "Pickup Done";
-    case 3:
-      return "On the way";
-    case 4:
-      return "Out for delivery";
-    case 7:
-      return "Delivered";
-    case 8:
-      return "RTO Initiated";
-    case 9:
-      return "RTO Delivered";
+    case 1: // Pickup Scheduled
+    case 2: // Pickup Done
+      return "pending";
+
+    case 3: // In Transit
+    case 4: // Out for Delivery
+      return "on_the_way";
+
+    case 7: // Delivered
+      return "delivered";
+
+    case 8: // RTO Initiated
+    case 9: // RTO Delivered
+      return "cancelled";
+
     default:
       return "pending";
   }
 };
+
 
 export const createShiprocketOrder = async (req, res) => {
   try {

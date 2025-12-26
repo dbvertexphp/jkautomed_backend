@@ -14,20 +14,17 @@ const orderSchema = new mongoose.Schema({
       // Status for each item
     },
   ],
-  status: { 
+ status: { 
   type: String, 
   enum: [
     "pending",
-    "Pickup Scheduled",
-    "Pickup Done",
-    "On the way",
-    "Out for Delivery",
-    "Delivered",
-    "RTO Initiated",
-    "RTO Delivered"
+    "on_the_way",
+    "delivered",
+    "cancelled"
   ], 
   default: "pending" 
 },
+
 
   shipping_address: {
     name: { type: String, required: true },
