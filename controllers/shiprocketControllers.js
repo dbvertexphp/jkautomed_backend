@@ -175,7 +175,6 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
       });
     }
 
-    // ✅ Validate ObjectId
     if (
       !mongoose.Types.ObjectId.isValid(order_db_id) ||
       !mongoose.Types.ObjectId.isValid(user_id)
@@ -186,7 +185,6 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
       });
     }
 
-    // 🔍 Find order by _id + user_id (both ObjectId)
     const order = await Order.findOne({
       _id: order_db_id,
       user_id: user_id,
@@ -199,7 +197,10 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
       });
     }
 
-    // 🚚 Shiprocket Tracking API (GET)
+    // 🔹 OLD STATUS (save before update)
+    const previous_status = order.status;
+
+    // 🚚 Shiprocket tracking
     const trackRes = await shiprocketRequest(
       "GET",
       `https://apiv2.shiprocket.in/v1/external/courier/track/awb/${awb}`
@@ -218,28 +219,28 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
     const current_status =
       trackingData.shipment_track?.[0]?.current_status || "NA";
 
-    // 🔁 Map status
     const updatedStatus = mapShiprocketStatus(shipment_status);
 
     // 📝 Update order
     order.status = updatedStatus;
     order.updated_at = new Date();
-
     await order.save();
 
-    // ✅ Response
+    // ✅ FINAL RESPONSE (as you asked)
     return res.status(200).json({
       success: true,
-      message: "Order status updated successfully",
+      message: "Order status update successfully",
       data: {
         order_db_id: order._id,
+        user_id: order.user_id,
         awb,
-        shipment_status,
+        previous_status,
+        new_status: updatedStatus,
         shiprocket_status_text: current_status,
-        order_status: updatedStatus,
         track_url: trackingData.track_url,
       },
     });
+
   } catch (error) {
     console.error("Tracking Error:", error.response?.data || error.message);
 
@@ -249,6 +250,7 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
     });
   }
 };
+
 export const assignAwbAndUpdateOrder = async (req, res) => {
   try {
     const { order_db_id, user_id, shipment_id, courier_id } = req.body;

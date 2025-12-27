@@ -133,7 +133,7 @@ const createOrder = asyncHandler(async (req, res) => {
     total_amount,
     awb_number,
     courier_charge,
-    status: "pending",
+    status: "Pending",
   });
 
   res.status(201).json({
