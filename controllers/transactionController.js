@@ -116,18 +116,16 @@ const addTransaction = asyncHandler(async (req, res) => {
     // 💾 Save to DB
     const savedTransaction = await transaction.save();
 
-    // 🔍 Fetch user firebase_token
+    // 🔍 Fetch user
     const user = await User.findById(user_id).select("firebase_token full_name");
     let firebaseTokenToUse = null;
+
+    // 🔹 Only use token if valid
     if (user && user.firebase_token && user.firebase_token !== "dummy_token") {
       firebaseTokenToUse = user.firebase_token;
     } else {
       console.log("⚠️ Firebase token missing or dummy, push skipped");
     }
-
-    // 🔍 Fetch order details for order number
-    const order = await Order.findById(order_id).select("order_id");
-    const orderNumber = order ? order.order_id : "UNKNOWN";
 
     // 🔔 Send & save notification
     await sendAndSaveNotification({
@@ -156,6 +154,8 @@ const addTransaction = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
 
 
 // Get all transactions with optional filtering, sorting, and pagination

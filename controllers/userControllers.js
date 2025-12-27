@@ -296,22 +296,11 @@ const authUser = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Invalid Password", 400);
   }
 
-  // if (userdata.otp_verified === 0) {
-  //   const otp = generateOTP();
-  //   // sendOTP(userdata.full_name, mobile, otp);
-  //   await User.updateOne({ _id: userdata._id }, { $set: { otp } });
-  //   // throw new ErrorHandler("OTP Not verified", 400);
-  //   res.status(400).json({
-  //     otp,
-  //     message: "OTP Not verified",
-  //     status: false,
-  //   });
-  // }
-
-  // Save firebase_token if provided
-  if (firebase_token) {
+  // Save firebase_token if provided AND token is missing/dummy
+  if (firebase_token && (!userdata.firebase_token || userdata.firebase_token === "dummy_token")) {
     userdata.firebase_token = firebase_token;
     await userdata.save();
+    console.log("✅ Firebase token updated on login");
   }
 
   if (isPasswordMatch) {
@@ -326,14 +315,14 @@ const authUser = asyncHandler(async (req, res) => {
       "Set-Cookie",
       cookie.serialize("Websitetoken", token, {
         httpOnly: true,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60), // 30 days (30 * 60 minutes * 60 seconds * 1000 ms)
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         path: "/",
       })
     );
 
     const user = {
       ...userdata.toObject(),
-      profile_pic: userdata.profile_pic, // No base URL added here
+      profile_pic: userdata.profile_pic,
     };
 
     res.json({
@@ -345,6 +334,7 @@ const authUser = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Invalid Password", 400);
   }
 });
+
 
 const adminLogin = asyncHandler(async (req, res) => {
   const { mobile, password } = req.body; // Get mobile and password from request body
