@@ -13,7 +13,22 @@ const ProductSchema = new Schema(
     quantity: { type: Number, required: true },
     part_number: { type: String, unique: true, required: true },
     reference_number: {type: String,default: null},
-    
+    brand_id: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Brand",
+  default: null,
+},
+
+model_id: {
+  type: mongoose.Schema.Types.ObjectId,
+  default: null,
+},
+
+variant_id: {
+  type: mongoose.Schema.Types.ObjectId,
+  default: null,
+},
+
     reviews: [
   {
     user_id: {

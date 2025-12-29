@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const protect = require("../middleware/authMiddleware.js");
-const { createProduct, getAllProducts, deleteProductById, toggleProductStatus,updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct } = require("../controllers/productControllers.js");
+const { createProduct, getAllProducts, deleteProductById,deleteModel,updateVariant, getModelsByBrand,deleteVariant,addVariant,getVariants,toggleProductStatus,updateProduct,updateModel,getProductById,getProductsByCategory, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand,addModel } = require("../controllers/productControllers.js");
 
 // Multer setup for image upload
 const storage = multer.diskStorage({
@@ -28,6 +28,18 @@ router.put("/update-product/:productId", upload.array("product_images", 10),upda
 router.post("/getProductsByCategory", protect, getProductsByCategory);
 router.post("/getRelatedProducts", protect, getRelatedProducts);
 router.get("/recent-products", protect,recentProduct);
+router.post("/addBrand", protect,addBrand);
+router.get("/getbrand", protect,getBrands);
+router.put("/updatebrand", protect,updateBrand);
+router.delete("/deleteBrand/:brand_id", protect,deleteBrand);
+router.post("/addModel", protect,addModel);
+router.put("/updateModel", protect, updateModel);
+router.delete("/deleteModel", protect, deleteModel);
+router.post("/addVariant", protect, addVariant);
+router.get("/getVariants", protect, getVariants);
+router.put("/updateVariant", protect, updateVariant);
+router.delete("/deleteVariant", protect, deleteVariant);
+router.get("/getModels", protect, getModelsByBrand);
 
 
 

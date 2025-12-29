@@ -1,8 +1,391 @@
 const asyncHandler = require("express-async-handler");
 const Products = require("../models/productsModel.js");
+const Brand = require("../models/brandModel");
 
+const addBrand = asyncHandler(async (req, res) => {
+  const { brand_name } = req.body;
 
+  // 🔴 Validation
+  if (!brand_name || brand_name.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Brand name is required",
+    });
+  }
 
+  // 🔍 Check duplicate brand
+  const existingBrand = await Brand.findOne({
+    brand_name: brand_name.trim(),
+  });
+
+  if (existingBrand) {
+    return res.status(409).json({
+      success: false,
+      message: "Brand already exists",
+    });
+  }
+
+  // ✅ Create brand
+  const brand = await Brand.create({
+    brand_name: brand_name.trim(),
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Brand added successfully",
+    data: brand,
+  });
+});
+// GET /api/brand/list
+const getBrands = async (req, res) => {
+  const brands = await Brand.find().sort({ createdAt: -1 });
+  res.json({ success: true, data: brands });
+};
+const updateVariant = asyncHandler(async (req, res) => {
+  const { variant_id, brand_id, model_id, variant_name } = req.body;
+
+  if (!variant_id || !brand_id || !model_id || !variant_name) {
+    res.status(400);
+    throw new Error("Variant ID, Brand ID, Model ID & Variant Name required");
+  }
+
+  // 1️⃣ Find the brand that currently has this variant
+  const oldBrand = await Brand.findOne({ "models.variants._id": variant_id });
+  if (!oldBrand) {
+    res.status(404);
+    throw new Error("Original variant not found");
+  }
+
+  let oldModel;
+  let oldVariantIndex;
+
+  // Find the model and variant index
+  oldBrand.models.forEach((m) => {
+    const idx = m.variants.findIndex((v) => v._id.toString() === variant_id);
+    if (idx !== -1) {
+      oldModel = m;
+      oldVariantIndex = idx;
+    }
+  });
+
+  if (!oldModel) {
+    res.status(404);
+    throw new Error("Original model not found");
+  }
+
+  const variantObj = oldModel.variants[oldVariantIndex];
+
+  // 2️⃣ Remove variant from old model
+  oldModel.variants.splice(oldVariantIndex, 1);
+  await oldBrand.save();
+
+  // 3️⃣ Add variant to new model
+  const newBrand = await Brand.findById(brand_id);
+  if (!newBrand) {
+    res.status(404);
+    throw new Error("New brand not found");
+  }
+
+  const newModel = newBrand.models.id(model_id);
+  if (!newModel) {
+    res.status(404);
+    throw new Error("New model not found");
+  }
+
+  // Update variant name
+  variantObj.variant_name = variant_name;
+
+  newModel.variants.push(variantObj);
+  await newBrand.save();
+
+  res.json({ success: true, message: "Variant updated successfully", variant: variantObj });
+});
+const updateBrand =async (req, res) => {
+  try {
+    const { brand_id, brand_name } = req.body;
+
+    if (!brand_id || !brand_name) {
+      return res.status(400).json({
+        success: false,
+        message: "brand_id and brand_name are required",
+      });
+    }
+
+    const brand = await Brand.findById(brand_id);
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found",
+      });
+    }
+
+    // 🔁 check duplicate
+    const alreadyExists = await Brand.findOne({
+      brand_name,
+      _id: { $ne: brand_id },
+    });
+
+    if (alreadyExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Brand name already exists",
+      });
+    }
+
+    brand.brand_name = brand_name;
+    await brand.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Brand updated successfully",
+      data: brand,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+const addModel = asyncHandler(async (req, res) => {
+  const { brand_id, model_number } = req.body;
+  if (!brand_id || !model_number) {
+    res.status(400);
+    throw new Error("Brand & Model required");
+  }
+
+  const brand = await Brand.findById(brand_id);
+  if (!brand) {
+    res.status(404);
+    throw new Error("Brand not found");
+  }
+
+  // check duplicate
+  if (brand.models.find(m => m.model_number === model_number)) {
+    res.status(400);
+    throw new Error("Model already exists for this brand");
+  }
+
+  brand.models.push({ model_number });
+  await brand.save();
+
+  res.json({ success: true, message: "Model added", brand });
+});
+const updateModel = asyncHandler(async (req, res) => {
+  const {
+    old_brand_id,
+    new_brand_id,
+    old_model_number,
+    new_model_number,
+  } = req.body;
+
+  if (
+    !old_brand_id ||
+    !new_brand_id ||
+    !old_model_number ||
+    !new_model_number
+  ) {
+    res.status(400);
+    throw new Error("All fields are required");
+  }
+
+  const oldBrand = await Brand.findById(old_brand_id);
+  if (!oldBrand) {
+    res.status(404);
+    throw new Error("Old brand not found");
+  }
+
+  const modelIndex = oldBrand.models.findIndex(
+    (m) => m.model_number === old_model_number
+  );
+
+  if (modelIndex === -1) {
+    res.status(404);
+    throw new Error("Model not found in old brand");
+  }
+
+  // 🔥 Case 1: Same brand → only update name
+  if (old_brand_id === new_brand_id) {
+    oldBrand.models[modelIndex].model_number = new_model_number;
+    await oldBrand.save();
+
+    return res.json({
+      success: true,
+      message: "Model updated successfully",
+    });
+  }
+
+  // 🔥 Case 2: Brand changed → move model
+  const newBrand = await Brand.findById(new_brand_id);
+  if (!newBrand) {
+    res.status(404);
+    throw new Error("New brand not found");
+  }
+
+  // Remove from old brand
+  oldBrand.models.splice(modelIndex, 1);
+  await oldBrand.save();
+
+  // Add to new brand
+  newBrand.models.push({
+    model_number: new_model_number,
+  });
+  await newBrand.save();
+
+  res.json({
+    success: true,
+    message: "Model moved to new brand successfully",
+  });
+});
+const deleteModel = asyncHandler(async (req, res) => {
+  const { brand_id, model_id } = req.body;
+
+  if (!brand_id || !model_id) {
+    res.status(400);
+    throw new Error("Brand ID & Model ID required");
+  }
+
+  // 🔹 Find the brand
+  const brand = await Brand.findById(brand_id);
+  if (!brand) {
+    res.status(404);
+    throw new Error("Brand not found");
+  }
+
+  // 🔹 Find the model by its _id inside the models array
+  const modelIndex = brand.models.findIndex(m => m._id.toString() === model_id);
+  if (modelIndex === -1) {
+    res.status(404);
+    throw new Error("Model not found");
+  }
+
+  // 🔹 Remove the model
+  brand.models.splice(modelIndex, 1);
+
+  // 🔹 Save the brand
+  await brand.save();
+
+  res.json({ success: true, message: "Model deleted" });
+});
+
+const deleteBrand =async (req, res) => {
+  try {
+    const { brand_id } = req.params;
+
+    if (!brand_id) {
+      return res.status(400).json({
+        success: false,
+        message: "brand_id is required",
+      });
+    }
+
+    const brand = await Brand.findById(brand_id);
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found",
+      });
+    }
+
+    await Brand.findByIdAndDelete(brand_id);
+
+    res.status(200).json({
+      success: true,
+      message: "Brand deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+const addVariant = asyncHandler(async (req, res) => {
+  const { brand_id, model_id, variant_name } = req.body;
+
+  if (!brand_id || !model_id || !variant_name) {
+    res.status(400);
+    throw new Error("Brand ID, Model ID & Variant Name required");
+  }
+
+  // 🔹 Brand check
+  const brand = await Brand.findById(brand_id);
+  if (!brand) {
+    res.status(404);
+    throw new Error("Brand not found");
+  }
+
+  // 🔹 Model check
+  const model = brand.models.id(model_id);
+  if (!model) {
+    res.status(404);
+    throw new Error("Model not found");
+  }
+
+  // 🔹 Duplicate check
+  const exists = model.variants.some(v => v.variant_name === variant_name);
+  if (exists) {
+    res.status(400);
+    throw new Error("Variant already exists");
+  }
+
+  // 🔹 Push variant as object (important!)
+  model.variants.push({ variant_name });
+
+  // 🔹 Save brand
+  await brand.save();
+
+  res.json({ success: true, message: "Variant added successfully", model });
+});
+const getVariants = asyncHandler(async (req, res) => {
+  const brands = await Brand.find({ status: true }); // sirf active brands
+
+  // Flatten all variants with brand and model info
+  let variantsList = [];
+
+  brands.forEach((brand) => {
+    brand.models.forEach((model) => {
+      model.variants.forEach((variant) => {
+        variantsList.push({
+          _id: variant._id,
+          variant_name: variant.variant_name,
+          brand_id: brand._id,
+          brand_name: brand.brand_name,
+          model_id: model._id,
+          model_number: model.model_number,
+        });
+      });
+    });
+  });
+
+  res.json({ success: true, data: variantsList });
+});
+const getModelsByBrand = asyncHandler(async (req, res) => {
+  const { brand_id } = req.query;
+
+  if (!brand_id) {
+    return res.status(400).json({
+      success: false,
+      message: "brand_id is required",
+    });
+  }
+
+  const brand = await Brand.findById(brand_id).select("models");
+
+  if (!brand) {
+    return res.status(404).json({
+      success: false,
+      message: "Brand not found",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    models: brand.models,
+  });
+});
 
 const createProduct = asyncHandler(async (req, res) => {
   try {
@@ -22,6 +405,9 @@ const createProduct = asyncHandler(async (req, res) => {
       product_description,
       reference_number,
       part_number,
+       brand_id,
+  model_id,
+  variant_id,
        // HTML string from React Quill
     } = req.body;
 
@@ -53,6 +439,9 @@ const createProduct = asyncHandler(async (req, res) => {
       category_name: category_name || null,
       subcategory_id: subcategory_id || null,
       subcategory_name: subcategory_name || null,
+        brand_id: brand_id || null,
+  model_id: model_id || null,
+  variant_id: variant_id || null,
       product_images, // array of image paths
       price: priceNum,
       quantity: quantityNum,
@@ -281,8 +670,12 @@ const updateProduct = asyncHandler(async (req, res) => {
       remove_images,
       reference_number,
       part_number,
+        brand_id,
+  model_id,
+  variant_id,
       // array of images to remove
     } = req.body;
+console.log("Brand:", brand_id, "Model:", model_id, "Variant:", variant_id);
 
     // 🔍 Find product
     const product = await Products.findById(productId);
@@ -336,6 +729,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.product_description = product_description || product.product_description;
     product.reference_number = reference_number || product.reference_number;
     product.part_number = part_number || product.part_number;
+    product.brand_id = brand_id || product.brand_id;
+product.model_id = model_id || product.model_id;
+product.variant_id = variant_id || product.variant_id;
+
 
     // ✅ Update shipment box
     if (shipment_box) {
@@ -436,13 +833,34 @@ const deleteProductById = async (req, res) => {
     res.status(500).json({ status: false, message: "Server Error" });
   }
 };
+const deleteVariant = asyncHandler(async (req, res) => {
+  const { brand_id, model_id, variant_id } = req.body;
+
+  if (!brand_id || !model_id || !variant_id) {
+    res.status(400);
+    throw new Error("Brand ID, Model ID & Variant ID required");
+  }
+
+  const brand = await Brand.findById(brand_id);
+  if (!brand) throw new Error("Brand not found");
+
+  const model = brand.models.id(model_id);
+  if (!model) throw new Error("Model not found");
+
+  const variant = model.variants.id(variant_id);
+  if (!variant) throw new Error("Variant not found");
+
+  variant.remove();
+  await brand.save();
+
+  res.json({ success: true, message: "Variant deleted" });
+});
 
 
 const getAllProducts = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const search = req.query.search || "";
-
 
   const query = search
     ? {
@@ -458,7 +876,19 @@ const getAllProducts = asyncHandler(async (req, res) => {
   const products = await Products.find(query)
     .skip((page - 1) * limit)
     .limit(limit)
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "brand_id",
+      select: "brand_name", // only include brand name
+    })
+    .populate({
+      path: "model_id",
+      select: "model_number", // only include model number
+    })
+    .populate({
+      path: "variant_id",
+      select: "variant_name", // only include variant name
+    });
 
   res.status(200).json({
     status: true,
@@ -470,4 +900,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 
-module.exports = { createProduct, getAllProducts, deleteProductById, toggleProductStatus, updateProduct,getProductById,getProductsByCategory, getRelatedProducts,recentProduct };
+
+
+module.exports = { createProduct, getAllProducts, deleteProductById,getVariants,getModelsByBrand, deleteVariant,updateVariant,addVariant,deleteModel,toggleProductStatus, updateModel,updateProduct,getProductById,getProductsByCategory,addModel, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand};
