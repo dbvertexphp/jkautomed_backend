@@ -897,100 +897,227 @@ const searchProducts = asyncHandler(async (req, res) => {
 });
 
 // Define the addFavoriteProduct function
+// const addFavoriteProduct = asyncHandler(async (req, res) => {
+//   const { product_id } = req.body;
+//   const userID = req.headers.userID;
+
+//   try {
+//     if (!product_id) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "Product ID is required",
+//       });
+//     }
+
+//     if (!userID) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "User ID is required",
+//       });
+//     }
+
+//     // ✅ Check product exists
+//     const product = await Product.findById(product_id);
+//     if (!product) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     // ✅ Check already favorite
+//     const alreadyFavorite = await Favorite.findOne({
+//       user_id: userID,
+//       product_id: product_id,
+//     });
+
+//     if (alreadyFavorite) {
+//       return res.status(409).json({
+//         status: false,
+//         message: "Product already added to favorites",
+//       });
+//     }
+
+//     // ✅ Create favorite
+//     const favorite = await Favorite.create({
+//       user_id: userID,
+//       product_id,
+//     });
+
+//     res.status(201).json({
+//       status: true,
+//       message: "Product added to favorites successfully",
+//       favorite,
+//     });
+//   } catch (error) {
+//     console.error("Error adding favorite product:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// });
+
+
+// const addFavoriteProduct = asyncHandler(async (req, res) => {
+//   const { product_id } = req.body;
+//   const userID = req.headers.userID;
+
+//   if (!product_id || !userID) {
+//     return res.status(400).json({ status: false, message: "Product ID and User ID are required" });
+//   }
+
+//   try {
+//     // 1. Check if product exists
+//     const product = await Product.findById(product_id);
+//     if (!product) {
+//       return res.status(404).json({ status: false, message: "Product not found" });
+//     }
+
+//     // 2. Check if already favorite (Idempotency)
+//     const alreadyFavorite = await Favorite.findOne({ user_id: userID, product_id });
+
+//     if (alreadyFavorite) {
+//       // Agar pehle se hai, toh error dene ki jagah success hi bhejenge
+//       return res.status(200).json({
+//         status: true,
+//         message: "Product is already in favorites",
+//         favorite: alreadyFavorite,
+//       });
+//     }
+
+//     // 3. Create new favorite
+//     const favorite = await Favorite.create({ user_id: userID, product_id });
+
+//     res.status(201).json({
+//       status: true,
+//       message: "Product added to favorites successfully",
+//       favorite,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ status: false, message: "Internal Server Error" });
+//   }
+// });
+
+
 const addFavoriteProduct = asyncHandler(async (req, res) => {
   const { product_id } = req.body;
   const userID = req.headers.userID;
 
+  // 1. Validation
+  if (!product_id || !userID) {
+    return res.status(400).json({ 
+      status: false, 
+      message: "Product ID and User ID are required" 
+    });
+  }
+
   try {
-    if (!product_id) {
-      return res.status(400).json({
-        status: false,
-        message: "Product ID is required",
-      });
-    }
-
-    if (!userID) {
-      return res.status(400).json({
-        status: false,
-        message: "User ID is required",
-      });
-    }
-
-    // ✅ Check product exists
-    const product = await Product.findById(product_id);
+    // 2. Check if product exists
+    const product = await Products.findById(product_id); // 'Products' aapke model ka naam hai
     if (!product) {
-      return res.status(404).json({
-        status: false,
-        message: "Product not found",
+      return res.status(404).json({ 
+        status: false, 
+        message: "Product not found" 
       });
     }
 
-    // ✅ Check already favorite
-    const alreadyFavorite = await Favorite.findOne({
-      user_id: userID,
-      product_id: product_id,
+    // 3. Logic: Check if already favorite
+    const alreadyFavorite = await Favorite.findOne({ 
+      user_id: userID, 
+      product_id: product_id 
     });
 
     if (alreadyFavorite) {
-      return res.status(409).json({
-        status: false,
-        message: "Product already added to favorites",
+      // ✅ Agar pehle se favorite hai, toh REMOVE kar do (Unfavorite)
+      await Favorite.findByIdAndDelete(alreadyFavorite._id);
+      
+      return res.status(200).json({
+        status: true,
+        message: "Product removed from favorites successfully",
+        isFavorite: false, // Frontend ke liye indicator
+      });
+    } else {
+      // ✅ Agar favorite nahi hai, toh ADD kar do (Favorite)
+      const favorite = await Favorite.create({
+        user_id: userID,
+        product_id,
+      });
+
+      return res.status(200).json({
+        status: true,
+        message: "Product added to favorites successfully",
+        isFavorite: true, // Frontend ke liye indicator
+        favorite,
       });
     }
-
-    // ✅ Create favorite
-    const favorite = await Favorite.create({
-      user_id: userID,
-      product_id,
-    });
-
-    res.status(201).json({
-      status: true,
-      message: "Product added to favorites successfully",
-      favorite,
-    });
   } catch (error) {
-    console.error("Error adding favorite product:", error);
-    res.status(500).json({
-      status: false,
-      message: "Internal Server Error",
+    console.error("Toggle Favorite Error:", error);
+    res.status(500).json({ 
+      status: false, 
+      message: "Internal Server Error" 
     });
   }
 });
 
-
 // Define the removeFavoriteProduct function
+// const removeFavoriteProduct = asyncHandler(async (req, res) => {
+//   const { product_id } = req.body;
+//   const userID = req.headers.userID;
+
+//   try {
+//     // Validate product_id and userID
+//     if (!product_id) {
+//       return res.status(400).json({ message: "Product ID is required", status: false });
+//     }
+//     if (!userID) {
+//       return res.status(400).json({ message: "User ID is required", status: false });
+//     }
+
+//     // Find and remove the favorite record
+//     const favorite = await Favorite.findOneAndDelete({
+//       user_id: userID,
+//       product_id: product_id,
+//     });
+
+//     if (!favorite) {
+//       return res.status(404).json({ message: "Favorite product not found", status: false });
+//     }
+
+//     // Return success response
+//     res.status(200).json({
+//       status: true,
+//       message: "Product removed from favorites successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error removing favorite product:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+
 const removeFavoriteProduct = asyncHandler(async (req, res) => {
   const { product_id } = req.body;
   const userID = req.headers.userID;
 
-  try {
-    // Validate product_id and userID
-    if (!product_id) {
-      return res.status(400).json({ message: "Product ID is required", status: false });
-    }
-    if (!userID) {
-      return res.status(400).json({ message: "User ID is required", status: false });
-    }
+  if (!product_id || !userID) {
+    return res.status(400).json({ status: false, message: "Product ID and User ID are required" });
+  }
 
-    // Find and remove the favorite record
+  try {
+    // Seedha delete karne ki koshish karein
     const favorite = await Favorite.findOneAndDelete({
       user_id: userID,
       product_id: product_id,
     });
 
-    if (!favorite) {
-      return res.status(404).json({ message: "Favorite product not found", status: false });
-    }
-
-    // Return success response
+    // Agar favorite nahi bhi mila, toh bhi success dein kyunki ab wo list mein nahi hai
     res.status(200).json({
       status: true,
-      message: "Product removed from favorites successfully",
+      message: favorite ? "Product removed from favorites" : "Product already removed",
     });
   } catch (error) {
-    console.error("Error removing favorite product:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ status: false, message: "Internal Server Error" });
   }
 });
 

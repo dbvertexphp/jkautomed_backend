@@ -14,8 +14,10 @@ const favoriteSchema = new Schema(
       required: true,
     },
   },
+ 
   { timestamps: true }
 );
+favoriteSchema.index({ user_id: 1, product_id: 1 }, { unique: true });
 
 const Favorite = mongoose.model("Favorite", favoriteSchema);
 module.exports = Favorite;

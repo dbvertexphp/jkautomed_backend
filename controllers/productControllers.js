@@ -604,8 +604,52 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
 
 
 
+// const getRelatedProducts = asyncHandler(async (req, res) => {
+//   const { categoryId, subcategoryIds, productId } = req.body;
+
+//   // 🔎 Validation
+//   if (!categoryId || !Array.isArray(subcategoryIds) || !subcategoryIds.length) {
+//     return res.status(400).json({
+//       status: false,
+//       message: "categoryId and subcategoryIds array are required",
+//     });
+//   }
+
+//   let products = await Products.find({
+//     category_id: categoryId,
+//     subcategory_id: { $in: subcategoryIds },
+//     status: 1,
+//     ...(productId && { _id: { $ne: productId } }),
+//   }).lean();
+
+//   const baseUrl = process.env.BASE_URL;
+
+//   products = products.map((p) => ({
+//     ...p,
+//      part_number: p.part_number || null,             // ✅ agar nahi hai toh null
+//     reference_number: p.reference_number || null, 
+//     product_images: p.product_images?.map(
+//       (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
+//     ),
+//   }));
+
+//   // 🎲 Shuffle products (Fisher–Yates)
+//   for (let i = products.length - 1; i > 0; i--) {
+//     const j = Math.floor(Math.random() * (i + 1));
+//     [products[i], products[j]] = [products[j], products[i]];
+//   }
+
+//   res.status(200).json({
+//     status: true,
+//     total: products.length,
+//     products,
+//   });
+// });
+
+
 const getRelatedProducts = asyncHandler(async (req, res) => {
   const { categoryId, subcategoryIds, productId } = req.body;
+  const userID = req.headers.userID; // 🟢 userID headers se liya taaki favorite check kar sakein
 
   // 🔎 Validation
   if (!categoryId || !Array.isArray(subcategoryIds) || !subcategoryIds.length) {
@@ -615,37 +659,63 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
     });
   }
 
-  let products = await Products.find({
-    category_id: categoryId,
-    subcategory_id: { $in: subcategoryIds },
-    status: 1,
-    ...(productId && { _id: { $ne: productId } }),
-  }).lean();
+  try {
+    // 1. Fetch Products
+    let products = await Products.find({
+      category_id: categoryId,
+      subcategory_id: { $in: subcategoryIds },
+      status: 1,
+      ...(productId && { _id: { $ne: productId } }),
+    }).lean();
 
-  const baseUrl = process.env.BASE_URL;
+    if (!products.length) {
+      return res.status(200).json({ status: true, total: 0, products: [] });
+    }
 
-  products = products.map((p) => ({
-    ...p,
-     part_number: p.part_number || null,             // ✅ agar nahi hai toh null
-    reference_number: p.reference_number || null, 
-    product_images: p.product_images?.map(
-      (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
-    ),
-  }));
+    // 2. Agar user logged in hai, toh uske saare favorites nikaal lo ek baar mein
+    let userFavorites = [];
+    if (userID) {
+      userFavorites = await Favorite.find({ user_id: userID }).select("product_id").lean();
+    }
+    const favoriteProductIds = userFavorites.map(fav => fav.product_id.toString());
 
-  // 🎲 Shuffle products (Fisher–Yates)
-  for (let i = products.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [products[i], products[j]] = [products[j], products[i]];
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+
+    // 3. Format Products (Add Rating and Favorite Status)
+    let formattedProducts = products.map((p) => {
+      // ⭐ Rating Calculation
+      const totalReviews = p.reviews?.length || 0;
+      const sumRatings = p.reviews?.reduce((acc, item) => acc + item.rating, 0) || 0;
+      const averageRating = totalReviews > 0 ? parseFloat((sumRatings / totalReviews).toFixed(1)) : 0;
+
+      return {
+        ...p,
+        average_rating: averageRating,
+        total_reviews: totalReviews,
+        is_favorite: favoriteProductIds.includes(p._id.toString()), // ✅ Check if favorite
+        part_number: p.part_number || null,
+        reference_number: p.reference_number || null,
+        product_images: p.product_images?.map(
+          (img) => `${baseUrl}/${img.replace(/^\/+/, "")}`
+        ),
+      };
+    });
+
+    // 🎲 Shuffle products (Fisher–Yates)
+    for (let i = formattedProducts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [formattedProducts[i], formattedProducts[j]] = [formattedProducts[j], formattedProducts[i]];
+    }
+
+    res.status(200).json({
+      status: true,
+      total: formattedProducts.length,
+      products: formattedProducts,
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
   }
-
-  res.status(200).json({
-    status: true,
-    total: products.length,
-    products,
-  });
 });
-
 
 
 const updateProduct = asyncHandler(async (req, res) => {
