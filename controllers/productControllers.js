@@ -524,14 +524,55 @@ const recentProduct = asyncHandler(async (req, res) => {
 
 
 
+// const getProductById = asyncHandler(async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//   const product = await Products.findOne({
+//   _id: id,
+//   status: 1
+// }).lean();
+
+//     if (!product) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     const baseUrl = process.env.BASE_URL; 
+
+//     // 🔥 product_images ko full URL me convert
+//     product.product_images = product.product_images.map(img =>
+//       img.startsWith("http") ? img : `${baseUrl}/${img}`
+//     );
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Product fetched successfully",
+//       product,
+//     });
+
+//   } catch (error) {
+//     console.error("Get product by id error:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: error.message || "Internal server error",
+//     });
+//   }
+// });
+
+
+ // Apne Brand model ka sahi path dein
+
 const getProductById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
-  const product = await Products.findOne({
-  _id: id,
-  status: 1
-}).lean();
+    const product = await Products.findOne({
+      _id: id,
+      status: 1
+    }).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -540,9 +581,38 @@ const getProductById = asyncHandler(async (req, res) => {
       });
     }
 
+    // --- Brand, Model, Variant logic start ---
+    const brandData = await Brand.findById(product.brand_id).lean();
+
+    product.brand_name = "N/A";
+    product.model_name = "N/A";
+    product.variant_name = "N/A";
+
+    if (brandData) {
+      product.brand_name = brandData.brand_name;
+
+      // Model dhoondein
+      const targetModel = brandData.models.find(
+        (m) => m._id.toString() === product.model_id?.toString()
+      );
+
+      if (targetModel) {
+        product.model_name = targetModel.model_number; // Model Name yahan add ho raha hai
+
+        // Variant dhoondein
+        const targetVariant = targetModel.variants.find(
+          (v) => v._id.toString() === product.variant_id?.toString()
+        );
+        
+        if (targetVariant) {
+          product.variant_name = targetVariant.variant_name;
+        }
+      }
+    }
+    // --- Brand, Model, Variant logic end ---
+
     const baseUrl = process.env.BASE_URL; 
 
-    // 🔥 product_images ko full URL me convert
     product.product_images = product.product_images.map(img =>
       img.startsWith("http") ? img : `${baseUrl}/${img}`
     );
@@ -561,6 +631,8 @@ const getProductById = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
 
 
 const getProductsByCategory = asyncHandler(async (req, res) => {
