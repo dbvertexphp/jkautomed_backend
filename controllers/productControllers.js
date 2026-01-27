@@ -517,10 +517,6 @@ const recentProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
-
-
-
 const product = asyncHandler(async (req, res) => {
   try {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
@@ -568,6 +564,65 @@ const product = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+
+const searchProduct = asyncHandler(async (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const { search } = req.query;
+
+  if (!search) {
+    return res.status(400).json({
+      status: false,
+      message: "Search keyword is required",
+    });
+  }
+
+  const products = await Products.find({
+    status: 1,
+    $or: [
+      { product_name: { $regex: search, $options: "i" } },
+      { part_number: { $regex: search, $options: "i" } },
+        { reference_number: { $regex: search, $options: "i" } },
+        {category_name: { $regex: search, $options: "i" }}
+    ], 
+  })
+    .sort({ created_at: -1 })
+    .lean();
+
+  if (!products.length) {
+    return res.status(404).json({
+      status: false,
+      message: "No products found",
+    });
+  }
+
+  const formattedProducts = products.map(product => ({
+    _id: product._id,
+    product_name: product.product_name,
+    category_id: product.category_id,
+    subcategory_id: product.subcategory_id,
+    price: product.price,
+    quantity: product.quantity,
+    part_number: product.part_number || null,
+    reference_number: product.reference_number || null,
+    category_name: product.category_name || null,
+    subcategory_name: product.subcategory_name || null,
+    product_images: product.product_images
+      ? product.product_images.map(
+          img => `${baseUrl}/${img.replace(/^\/+/, "")}`
+        )
+      : [],
+    created_at: product.created_at,
+  }));
+
+  res.status(200).json({
+    status: true,
+    total: formattedProducts.length,
+    data: formattedProducts,
+  });
+});
+
 
 
 // const getProductById = asyncHandler(async (req, res) => {
@@ -1090,4 +1145,4 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
 
 
-module.exports = { createProduct, getAllProducts, deleteProductById,getVariants,getModelsByBrand, deleteVariant,updateVariant,addVariant,deleteModel,toggleProductStatus, updateModel,updateProduct,getProductById,getProductsByCategory,addModel, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand,product};
+module.exports = { createProduct,searchProduct, getAllProducts, deleteProductById,getVariants,getModelsByBrand, deleteVariant,updateVariant,addVariant,deleteModel,toggleProductStatus, updateModel,updateProduct,getProductById,getProductsByCategory,addModel, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand,product};
