@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const protect = require("../middleware/authMiddleware.js");
-const { createProduct, getAllProducts, deleteProductById,deleteModel,updateVariant, getModelsByBrand,deleteVariant,addVariant,getVariants,toggleProductStatus,updateProduct,updateModel,getProductById,getProductsByCategory, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand,addModel } = require("../controllers/productControllers.js");
+const { createProduct, getAllProducts, deleteProductById,deleteModel,updateVariant, getModelsByBrand,deleteVariant,addVariant,getVariants,toggleProductStatus,updateProduct,updateModel,getProductById,getProductsByCategory, getRelatedProducts,recentProduct,addBrand,getBrands,updateBrand,deleteBrand,addModel, product } = require("../controllers/productControllers.js");
 
 // Multer setup for image upload
 const storage = multer.diskStorage({
@@ -21,6 +21,7 @@ const upload = multer({ storage });
 
 // POST route
 // Max 10 images allowed, tum change kar sakte ho
+router.get("/", protect,product);
 router.post("/add", upload.array("product_images", 10), createProduct);
 router.delete("/delete/:id", deleteProductById);
 router.put("/status/:id",toggleProductStatus);
