@@ -5,14 +5,14 @@ const protect = require("../middleware/authMiddleware.js");
 
 const chatRoutes = express.Router();
 
-chatRoutes.route("/").post(protect, accessChat);
-chatRoutes.route("/blockUserList").get(protect, blockUserList);
-chatRoutes.route("/:limit").get(protect, fetchChats);
-chatRoutes.route("/group").post(protect, createGroupChat);
-chatRoutes.route("/blockUser").post(protect, blockUser);
+chatRoutes.route("/").post( accessChat);
+chatRoutes.route("/blockUserList").get( blockUserList);
+chatRoutes.route("/:limit").get( fetchChats);
+chatRoutes.route("/group").post( createGroupChat);
+chatRoutes.route("/blockUser").post( blockUser);
 
-chatRoutes.route("/rename").put(protect, renameGroup);
-chatRoutes.route("/groupremove").put(protect, removeFromGroup);
-chatRoutes.route("/groupadd").put(protect, addToGroup);
+chatRoutes.route("/rename").put( renameGroup);
+chatRoutes.route("/groupremove").put( removeFromGroup);
+chatRoutes.route("/groupadd").put( addToGroup);
 
 module.exports = { chatRoutes };

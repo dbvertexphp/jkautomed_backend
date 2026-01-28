@@ -20,14 +20,14 @@ const protect = require("../middleware/authMiddleware.js");
 const commonProtect = require("../middleware/comman_authMiddleware.js");
 
 const timelineRoutes = express.Router();
-timelineRoutes.route("/uploadPostTimeline").post(protect, uploadPostTimeline);
+timelineRoutes.route("/uploadPostTimeline").post( uploadPostTimeline);
 timelineRoutes.route("/searchPostsOnTimeline").post(searchPostsOnTimeline);
-timelineRoutes.route("/addTimelineComment").post(protect, addTimelineComment);
-timelineRoutes.route("/ViewCountAdd").post(protect, ViewCountAdd);
-timelineRoutes.route("/Timelinedelete").delete(protect, Timelinedelete);
+timelineRoutes.route("/addTimelineComment").post( addTimelineComment);
+timelineRoutes.route("/ViewCountAdd").post( ViewCountAdd);
+timelineRoutes.route("/Timelinedelete").delete( Timelinedelete);
 timelineRoutes
       .route("/updateTimelineViewCount")
-      .post(protect, updateTimelineViewCount);
+      .post( updateTimelineViewCount);
 timelineRoutes
       .route("/getTimelineComments/:timelineId")
       .get(commonProtect, getTimelineComments);
@@ -36,18 +36,18 @@ timelineRoutes
       .post(commonProtect, getPaginatedTimeline);
 timelineRoutes
       .route("/updatePostTimelineLike")
-      .post(protect, updatePostTimelineLike);
+      .post( updatePostTimelineLike);
 timelineRoutes
       .route("/getUserTimeline/:user_id/:page")
       .get(commonProtect, getUserTimeline);
-timelineRoutes.route("/getMyTimeline/:page").get(protect, getMyTimeline);
-timelineRoutes.route("/getAllTimeline").post(protect, getAllTimeline);
-timelineRoutes.route("/statusUpdate").post(protect, statusUpdate);
+timelineRoutes.route("/getMyTimeline/:page").get( getMyTimeline);
+timelineRoutes.route("/getAllTimeline").post( getAllTimeline);
+timelineRoutes.route("/statusUpdate").post( statusUpdate);
 
 //---------------------- Admin -----------------------------//
 
 timelineRoutes
       .route("/getPaginatedPostTimelinesAdmin")
-      .post(protect, getPaginatedPostTimelinesAdmin);
-timelineRoutes.route("/TimelineAdminStatus").post(protect, TimelineAdminStatus);
+      .post( getPaginatedPostTimelinesAdmin);
+timelineRoutes.route("/TimelineAdminStatus").post( TimelineAdminStatus);
 module.exports = { timelineRoutes };

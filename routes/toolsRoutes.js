@@ -15,9 +15,9 @@ toolsRoutes.post("/deleteTools", protect, Authorization(["supplier","both", "adm
 
 toolsRoutes.get("/getProducts", protect, Authorization(["supplier","both"]), getProducts);
 
-toolsRoutes.get("/getAllTools", protect, getAllTools);
+toolsRoutes.get("/getAllTools",  getAllTools);
 
-toolsRoutes.post("/getProductsBySupplierId", protect, getProductsBySupplierId);
+toolsRoutes.post("/getProductsBySupplierId",  getProductsBySupplierId);
 
 toolsRoutes.get("/getProductById", protect, Authorization(["supplier","both", "admin"]), getProductById);
 

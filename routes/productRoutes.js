@@ -21,27 +21,27 @@ const upload = multer({ storage });
 
 // POST route
 // Max 10 images allowed, tum change kar sakte ho
-router.get("/", protect,product);
-router.get("/search", protect,searchProduct);
+router.get("/", product);
+router.get("/search", searchProduct);
 router.post("/add", upload.array("product_images", 10), createProduct);
 router.delete("/delete/:id", deleteProductById);
 router.put("/status/:id",toggleProductStatus);
 router.put("/update-product/:productId", upload.array("product_images", 10),updateProduct);
-router.post("/getProductsByCategory", protect, getProductsByCategory);
-router.post("/getRelatedProducts", protect, getRelatedProducts);
-router.get("/recent-products", protect,recentProduct);
-router.post("/addBrand", protect,addBrand);
-router.get("/getbrand", protect,getBrands);
-router.put("/updatebrand", protect,updateBrand);
-router.delete("/deleteBrand/:brand_id", protect,deleteBrand);
-router.post("/addModel", protect,addModel);
-router.put("/updateModel", protect, updateModel);
-router.delete("/deleteModel", protect, deleteModel);
-router.post("/addVariant", protect, addVariant);
-router.get("/getVariants", protect, getVariants);
-router.put("/updateVariant", protect, updateVariant);
-router.delete("/deleteVariant", protect, deleteVariant);
-router.get("/getModels", protect, getModelsByBrand);
+router.post("/getProductsByCategory",  getProductsByCategory);
+router.post("/getRelatedProducts",  getRelatedProducts);
+router.get("/recent-products", recentProduct);
+router.post("/addBrand", addBrand);
+router.get("/getbrand", getBrands);
+router.put("/updatebrand", updateBrand);
+router.delete("/deleteBrand/:brand_id", deleteBrand);
+router.post("/addModel", addModel);
+router.put("/updateModel",  updateModel);
+router.delete("/deleteModel",  deleteModel);
+router.post("/addVariant",  addVariant);
+router.get("/getVariants",  getVariants);
+router.put("/updateVariant",  updateVariant);
+router.delete("/deleteVariant",  deleteVariant);
+router.get("/getModels",  getModelsByBrand);
 
 
 

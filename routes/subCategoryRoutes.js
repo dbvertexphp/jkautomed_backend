@@ -7,14 +7,14 @@ const { createSubcategory, deleteSubCategory,updateSubCategory, getAllSubCategor
 const subCategoryRoutes = express.Router();
 
 subCategoryRoutes.route("/createSubCategory").post(createSubcategory);
-subCategoryRoutes.route("/UpdateSubCategory").post(protect, updateSubCategory);
+subCategoryRoutes.route("/UpdateSubCategory").post( updateSubCategory);
 subCategoryRoutes.route("/getAllSubCategories").get(getAllSubCategories);
 subCategoryRoutes.route("/GetAllCategoriesAdmin").get(GetAllCategoriesAdmin);
 subCategoryRoutes.route("/GetAllSubCategoriesAdminpage").post(getAllSubCategoriesAdminpage);
 subCategoryRoutes.route("/GetCategoryByName").post(GetSingleCategoryByName);
 subCategoryRoutes.route("/GetSubCategoryByCategoryId").post(getSubCategoryByCategoryId);
-subCategoryRoutes.route("/getSubCategoryByCategoryIdInAdmin/:category_id").get(protect, getSubCategoryByCategoryIdInAdmin);
-subCategoryRoutes.route("/DeleteCategory").post(protect, DeleteCategory);
+subCategoryRoutes.route("/getSubCategoryByCategoryIdInAdmin/:category_id").get( getSubCategoryByCategoryIdInAdmin);
+subCategoryRoutes.route("/DeleteCategory").post( DeleteCategory);
 subCategoryRoutes.post("/deleteSubCategory", deleteSubCategory);
 
 

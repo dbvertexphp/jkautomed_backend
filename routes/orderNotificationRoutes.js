@@ -6,6 +6,6 @@ const protect = require("../middleware/authMiddleware.js");
 const orderNotificationsRoutes = express.Router();
 
 // GET notifications for a user
-orderNotificationsRoutes.route("/getTeacherNotifications").get(protect, getTeacherNotifications);
+orderNotificationsRoutes.route("/getTeacherNotifications").get( getTeacherNotifications);
 
 module.exports = { orderNotificationsRoutes };

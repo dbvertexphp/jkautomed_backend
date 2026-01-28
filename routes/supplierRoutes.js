@@ -45,13 +45,13 @@ supplierRoutes.post("/deleteProduct", protect, Authorization(["supplier", "admin
 
 supplierRoutes.get("/getProducts", protect, Authorization(["supplier","both"]), getProducts);
 
-supplierRoutes.get("/getAllProducts", protect, getAllProducts);
+supplierRoutes.get("/getAllProducts",  getAllProducts);
 
-supplierRoutes.get("/getAllProductsInAdmin", protect, getAllProductsInAdmin);
+supplierRoutes.get("/getAllProductsInAdmin",  getAllProductsInAdmin);
 
-supplierRoutes.post("/getProductsBySupplierId", protect, getProductsBySupplierId);
+supplierRoutes.post("/getProductsBySupplierId",  getProductsBySupplierId);
 
-supplierRoutes.post("/getProductsByEnglishName", protect, getProductsByEnglishName);
+supplierRoutes.post("/getProductsByEnglishName",  getProductsByEnglishName);
 
 supplierRoutes.get("/getPincode", protect, Authorization(["supplier","both"]), getPincode);
 
@@ -67,9 +67,9 @@ supplierRoutes.get("/getSupplierProfileData", protect, Authorization(["supplier"
 
 supplierRoutes.get("/getSupplierOrderNotification", protect, Authorization(["supplier","both"]), getSupplierOrderNotification);
 
-supplierRoutes.post("/getFertilizerBySupplierId", protect, getFertilizerBySupplierId);
+supplierRoutes.post("/getFertilizerBySupplierId",  getFertilizerBySupplierId);
 
-supplierRoutes.post("/getToolsBySupplierId", protect, getToolsBySupplierId);
+supplierRoutes.post("/getToolsBySupplierId",  getToolsBySupplierId);
 
 supplierRoutes.get("/getAllFertilizerProducts", protect, Authorization(["user", "admin","both"]), getAllFertilizerProducts);
 

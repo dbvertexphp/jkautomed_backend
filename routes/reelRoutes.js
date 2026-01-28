@@ -30,13 +30,13 @@ const protect = require("../middleware/authMiddleware.js");
 const commonProtect = require("../middleware/comman_authMiddleware.js");
 
 const reelRoutes = express.Router();
-reelRoutes.route("/uploadReel").post(protect, uploadReel);
-reelRoutes.route("/ReelViewUserList").post(protect, ReelViewUserList);
+reelRoutes.route("/uploadReel").post( uploadReel);
+reelRoutes.route("/ReelViewUserList").post( ReelViewUserList);
 reelRoutes.route("/searchReels").post(searchReels);
-reelRoutes.route("/updateReelLike").post(protect, updateReelLike);
-reelRoutes.route("/addReelComment").post(protect, addReelComment);
-reelRoutes.route("/deleteReel").delete(protect, deleteReel);
-reelRoutes.route("/updateReelViewCount").post(protect, updateReelViewCount);
+reelRoutes.route("/updateReelLike").post( updateReelLike);
+reelRoutes.route("/addReelComment").post( addReelComment);
+reelRoutes.route("/deleteReel").delete( deleteReel);
+reelRoutes.route("/updateReelViewCount").post( updateReelViewCount);
 reelRoutes
       .route("/getReelComments/:reelId")
       .get(commonProtect, getReelComments);
@@ -58,19 +58,19 @@ reelRoutes
 reelRoutes
       .route("/getUserReelsWebsite/")
       .post(commonProtect, getUserReelsWebsite);
-reelRoutes.route("/getMyReels/:page").get(protect, getMyReels);
-reelRoutes.route("/getMyReel_ByCategory").post(protect, getMyReel_ByCategory);
-reelRoutes.route("/getMyReelsWebsite/:page").post(protect, getMyReelsWebsite);
-reelRoutes.route("/getReelsUploadUrlS3").get(protect, getReelsUploadUrlS3);
-reelRoutes.route("/getAllReels").post(protect, getAllReels);
-reelRoutes.route("/statusUpdate").post(protect, statusUpdate);
-reelRoutes.route("/ViewCountAdd").post(protect, ViewCountAdd);
+reelRoutes.route("/getMyReels/:page").get( getMyReels);
+reelRoutes.route("/getMyReel_ByCategory").post( getMyReel_ByCategory);
+reelRoutes.route("/getMyReelsWebsite/:page").post( getMyReelsWebsite);
+reelRoutes.route("/getReelsUploadUrlS3").get( getReelsUploadUrlS3);
+reelRoutes.route("/getAllReels").post( getAllReels);
+reelRoutes.route("/statusUpdate").post( statusUpdate);
+reelRoutes.route("/ViewCountAdd").post( ViewCountAdd);
 
 //---------------------- Admin -----------------------------//
 
 reelRoutes
       .route("/getPaginatedReelsAdmin")
-      .post(protect, getPaginatedReelsAdmin);
-reelRoutes.route("/ReelsAdminStatus").post(protect, ReelsAdminStatus);
+      .post( getPaginatedReelsAdmin);
+reelRoutes.route("/ReelsAdminStatus").post( ReelsAdminStatus);
 
 module.exports = { reelRoutes };

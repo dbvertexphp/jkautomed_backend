@@ -10,12 +10,12 @@ const protect = require("../middleware/authMiddleware.js");
 
 const myfriendRoutes = express.Router();
 
-myfriendRoutes.route("/Sendfriendrequest").post(protect, SendFriendRequest);
-myfriendRoutes.route("/AcceptFriendRequest").post(protect, AcceptFriendRequest);
-myfriendRoutes.route("/").post(protect, getMyFriends);
-myfriendRoutes.route("/getMyFriendsAdd").post(protect, getMyFriendsAdd);
+myfriendRoutes.route("/Sendfriendrequest").post( SendFriendRequest);
+myfriendRoutes.route("/AcceptFriendRequest").post( AcceptFriendRequest);
+myfriendRoutes.route("/").post( getMyFriends);
+myfriendRoutes.route("/getMyFriendsAdd").post( getMyFriendsAdd);
 myfriendRoutes
       .route("/getMyFriendsrequests")
-      .post(protect, getMyFriendsrequests);
+      .post( getMyFriendsrequests);
 
 module.exports = { myfriendRoutes };

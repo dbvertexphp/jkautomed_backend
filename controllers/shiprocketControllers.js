@@ -1,6 +1,9 @@
-import mongoose from "mongoose";
-import Order from "../models/orderModel.js";
-import { shiprocketRequest } from "../shiprocket.api.js";
+// import mongoose from "mongoose";
+// import Order from "../models/orderModel.js";
+// import { shiprocketRequest } from "../shiprocket.api.js";
+const mongoose = require("mongoose");
+const Order = require("../models/orderModel.js");
+const { shiprocketRequest } = require("../shiprocket.api.js");
 const mapShiprocketStatus = (shipment_status) => {
   switch (shipment_status) {
     case 1: // Pickup Scheduled
@@ -24,7 +27,7 @@ const mapShiprocketStatus = (shipment_status) => {
 };
 
 
-export const createShiprocketOrder = async (req, res) => {
+ const createShiprocketOrder = async (req, res) => {
   try {
     const {
       order_id,
@@ -123,8 +126,7 @@ export const createShiprocketOrder = async (req, res) => {
   }
 };
 
-
-export const checkServiceability = async (req, res) => {
+ const checkServiceability = async (req, res) => {
   try {
     const response = await shiprocketRequest(
       "GET",
@@ -164,7 +166,8 @@ export const checkServiceability = async (req, res) => {
     });
   }
 };
-export const trackAndUpdateOrderStatus = async (req, res) => {
+
+ const trackAndUpdateOrderStatus = async (req, res) => {
   try {
     const { order_db_id, user_id, awb } = req.body;
 
@@ -251,7 +254,7 @@ export const trackAndUpdateOrderStatus = async (req, res) => {
   }
 };
 
-export const assignAwbAndUpdateOrder = async (req, res) => {
+ const assignAwbAndUpdateOrder = async (req, res) => {
   try {
     const { order_db_id, user_id, shipment_id, courier_id } = req.body;
 
@@ -335,3 +338,4 @@ export const assignAwbAndUpdateOrder = async (req, res) => {
     });
   }
 };
+module.exports={createShiprocketOrder,checkServiceability,trackAndUpdateOrderStatus,assignAwbAndUpdateOrder}

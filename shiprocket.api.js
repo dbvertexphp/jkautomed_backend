@@ -1,7 +1,11 @@
-import axios from "axios";
-import { getShiprocketToken } from "./shiprocket.service.js";
+// import axios from "axios";
+// import { getShiprocketToken } from "./shiprocket.service.js";
+const axios = require("axios");
+const { getShiprocketToken } = require("./shiprocket.service.js");
 
-export const shiprocketRequest = async (method, url, data = null) => {
+
+
+ const shiprocketRequest = async (method, url, data = null) => {
   try {
     const token = await getShiprocketToken();
 
@@ -34,3 +38,7 @@ export const shiprocketRequest = async (method, url, data = null) => {
     throw err;
   }
 };
+
+module.exports={
+  shiprocketRequest
+}

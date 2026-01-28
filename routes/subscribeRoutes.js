@@ -9,9 +9,9 @@ const protect = require("../middleware/authMiddleware.js");
 
 const subscribeRoutes = express.Router();
 
-subscribeRoutes.route("/SubscribeRequest").post(protect, SubscribeRequest);
-subscribeRoutes.route("/UnSubscribeRequest").post(protect, UnsubscribeRequest);
-subscribeRoutes.route("/").get(protect, getSubscribes);
-subscribeRoutes.route("/getSubscriptionRequest").get(protect, getSubscriptionRequest);
+subscribeRoutes.route("/SubscribeRequest").post( SubscribeRequest);
+subscribeRoutes.route("/UnSubscribeRequest").post( UnsubscribeRequest);
+subscribeRoutes.route("/").get( getSubscribes);
+subscribeRoutes.route("/getSubscriptionRequest").get( getSubscriptionRequest);
 
 module.exports = { subscribeRoutes };

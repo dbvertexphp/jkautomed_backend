@@ -8,8 +8,8 @@ const protect = require("../middleware/authMiddleware.js");
 
 const messageRoutes = express.Router();
 
-messageRoutes.route("/:chatId").get(protect, allMessages);
-messageRoutes.route("/").post(protect, sendMessage);
-messageRoutes.route("/UpdateMessagesRead").post(protect, UpdateMessagesRead);
+messageRoutes.route("/:chatId").get( allMessages);
+messageRoutes.route("/").post( sendMessage);
+messageRoutes.route("/UpdateMessagesRead").post( UpdateMessagesRead);
 
 module.exports = { messageRoutes };

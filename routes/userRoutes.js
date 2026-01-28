@@ -87,10 +87,10 @@ userRoutes.route("/verifyOtp").post(verifyOtp);
 userRoutes.route("/resendOTP").post(resendOTP);
 userRoutes.route("/ForgetresendOTP").post(ForgetresendOTP);
 userRoutes.route("/forgetPassword").put(forgetPassword);
-userRoutes.route("/ChangePassword").put(protect, ChangePassword);
-userRoutes.route("/logoutUser").get(protect, logoutUser);
-userRoutes.route("/getAllSupplier").get(protect, getAllSupplier);
-userRoutes.route("/getAddresses/:userId").get(protect, getAddresses);
+userRoutes.route("/ChangePassword").put( ChangePassword);
+userRoutes.route("/logoutUser").get( logoutUser);
+userRoutes.route("/getAllSupplier").get( getAllSupplier);
+userRoutes.route("/getAddresses/:userId").get( getAddresses);
 userRoutes.put("/update-address/:userId", addOrUpdateAddress);
 
 
@@ -123,7 +123,7 @@ userRoutes.route("/sendNotificationToRole").post(protect, Authorization(["admin"
 
 
 userRoutes.route("/getCoursesByUserId").get(protect, Authorization(["student"]), getCoursesByUserId);
-userRoutes.route("/getAllUsers").get(protect, Authorization(["student", "admin"]), getAllUsers);
+userRoutes.route("/getAllUsers").get(  getAllUsers);
 userRoutes.route("/getAllBothUsers").get(protect, Authorization(["admin"]), getAllBothUsers);
 userRoutes.route("/getFavoriteTeachers").get(protect, Authorization(["student"]), getFavoriteTeachers);
 userRoutes.route("/getRatingsByTeacherId/:teacherId").get(protect, getRatingsByTeacherId);
@@ -138,7 +138,7 @@ userRoutes.route("/getBankDetailsAdmin/:teacher_id").get(protect, Authorization(
 userRoutes.route("/calculatePayment").post(protect, Authorization(["supplier","both"]), calculatePayment);
 
 /*------------- Admin apis --------------------- */
-userRoutes.route("/getAllOrders").get(protect, Authorization(["admin"]), getAllOrders);
+userRoutes.route("/getAllOrders").get(getAllOrders);
 userRoutes.route("/getAllCancelOrders").get(protect, Authorization(["admin"]), getAllCancelOrders);
 userRoutes.route("/getUserOrderInAdmin").post(protect, Authorization(["admin"]), getUserOrderInAdmin);
 userRoutes.route("/getProductsByOrderAndSupplier/:order_id").get(protect, Authorization(["admin"]), getProductsByOrderAndSupplier);
@@ -149,7 +149,7 @@ userRoutes.route("/getTeacherPaymentStatuses").get(protect, Authorization(["admi
 userRoutes.route("/getTeacherPaymentStatusById/:teacher_id").get(protect, Authorization(["admin"]), getTeacherPaymentStatusById);
 userRoutes.route("/addTeacherPaymentStatus").post(protect, Authorization(["admin"]), addTeacherPaymentStatus);
 userRoutes.route("/getStudentsPayment").get(protect, Authorization(["admin"]), getStudentsPayment);
-userRoutes.route("/getAllDashboardCount").get(protect, Authorization(["admin"]), getAllDashboardCount);
+userRoutes.route("/getAllDashboardCount").get( getAllDashboardCount);
 
 // student protect route
 /*------------- Comman Auth Routes --------------------- */
@@ -157,38 +157,38 @@ userRoutes.route("/getUserView/:_id/").get(commonProtect, getUserView);
 
 /*------------- Auth Routes --------------------- */
 
-userRoutes.route("/").get(protect, getUsers);
+userRoutes.route("/").get( getUsers);
 
-userRoutes.route("/updateUserProfile").put(protect, updateProfileData);
-userRoutes.route("/searchUsers").post(protect, searchUsers);
-userRoutes.route("/UpdateMobileAdmin").post(protect, UpdateMobileAdmin);
-userRoutes.route("/profilePicUpload").put(protect, profilePicUpload);
-userRoutes.route("/UserAdminStatus").post(protect, UserAdminStatus);
+userRoutes.route("/updateUserProfile").put( updateProfileData);
+userRoutes.route("/searchUsers").post( searchUsers);
+userRoutes.route("/UpdateMobileAdmin").post( UpdateMobileAdmin);
+userRoutes.route("/profilePicUpload").put( profilePicUpload);
+userRoutes.route("/UserAdminStatus").post( UserAdminStatus);
 
 // userRoutes.route("/updateUserWatchTime").post(protect, updateUserWatchTime);
 userRoutes.route("/getReview/:id/:limit").get(getReview);
-userRoutes.route("/profilePicKey").post(protect, profilePicKey);
+userRoutes.route("/profilePicKey").post( profilePicKey);
 
 /*------------- Calendar Routes --------------------- */
-userRoutes.route("/Createcalendar").post(protect, CreateCalendar);
+userRoutes.route("/Createcalendar").post( CreateCalendar);
 userRoutes.route("/FindPriceByDateTime").post(FindPriceByDateTime);
-userRoutes.route("/GetSpecialEntries").get(protect, GetSpecialEntries);
-userRoutes.route("/GetNormalEntries").get(protect, GetNormalEntries);
+userRoutes.route("/GetSpecialEntries").get( GetSpecialEntries);
+userRoutes.route("/GetNormalEntries").get( GetNormalEntries);
 /*------------- Hire Routes --------------------- */
-userRoutes.route("/createHire").post(protect, createHire);
-userRoutes.route("/updateHireStatus").post(protect, updateHireStatus);
-userRoutes.route("/HirePaymentUpdateStatus").post(protect, HirePaymentUpdateStatus);
-userRoutes.route("/getHireList").get(protect, getHireListByUserId);
-userRoutes.route("/getHireByMe").get(protect, getHireByMe);
+userRoutes.route("/createHire").post( createHire);
+userRoutes.route("/updateHireStatus").post( updateHireStatus);
+userRoutes.route("/HirePaymentUpdateStatus").post( HirePaymentUpdateStatus);
+userRoutes.route("/getHireList").get( getHireListByUserId);
+userRoutes.route("/getHireByMe").get( getHireByMe);
 
 /*------------- Admin Routes --------------------- */
 
-userRoutes.route("/getAllHireList").post(protect, getAllHireList);
-userRoutes.route("/updateProfileDataByAdmin").post(protect, updateProfileDataByAdmin);
-userRoutes.route("/getCoursesByTeacherId/:teacher_id").get(protect, getCoursesByTeacherId);
+userRoutes.route("/getAllHireList").post( getAllHireList);
+userRoutes.route("/updateProfileDataByAdmin").post( updateProfileDataByAdmin);
+userRoutes.route("/getCoursesByTeacherId/:teacher_id").get( getCoursesByTeacherId);
 
-userRoutes.route("/getAllSuppliersInAdmin").get(protect, getAllSuppliersInAdmin);
-userRoutes.route("/getAllSupplierstotal").get(protect, getAllSupplierstotal);
+userRoutes.route("/getAllSuppliersInAdmin").get( getAllSuppliersInAdmin);
+userRoutes.route("/getAllSupplierstotal").get( getAllSupplierstotal);
 
 userRoutes.route("/updateNumberToString").post(updateNumberToString);
 userRoutes.route("/updatePinCodeToString").post(updatePinCodeToString);

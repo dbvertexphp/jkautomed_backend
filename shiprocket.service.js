@@ -1,5 +1,7 @@
-import axios from "axios";
-import ShiprocketAuth from "./models/shiprocketmodel.js";
+// import axios from "axios";
+// import ShiprocketAuth from "./models/shiprocketmodel.js";
+const axios = require("axios");
+const ShiprocketAuth = require("./models/shiprocketmodel.js");
 
 const TOKEN_TTL = 23 * 60 * 60 * 1000; // 23 hours
 
@@ -33,7 +35,7 @@ const loginAndSaveShiprocket = async () => {
 };
 
 // 🔑 Get token (with expire check)
-export const getShiprocketToken = async (force = false) => {
+ const getShiprocketToken = async (force = false) => {
   const record = await ShiprocketAuth.findOne();
 
   if (
@@ -50,3 +52,6 @@ export const getShiprocketToken = async (force = false) => {
 
 // 🔹 Test run
 
+module.exports={
+  getShiprocketToken
+}
